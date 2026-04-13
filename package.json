@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "dev": "concurrently \"vite\" \"tsx watch server/index.ts\"",
+    "dev": "concurrently \"vite --host\" \"tsx watch server/index.ts\"",
     "build": "vite build && tsc -p tsconfig.server.json",
     "start": "node dist-server/index.js",
     "preview": "vite preview",
