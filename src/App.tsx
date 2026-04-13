@@ -163,8 +163,6 @@ export default function App() {
     });
   }
 
-  // ── Render ──────────────────────────────────────────────────
-
   const themeToggle = (
     <button className="theme-toggle" onClick={toggleTheme} title="Toggle dark/light mode">
       {theme === 'dark' ? '🌙' : '☀️'}

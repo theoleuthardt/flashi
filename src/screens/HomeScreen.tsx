@@ -64,7 +64,6 @@ export default function HomeScreen({
 
   return (
     <div className="app-layout">
-      {/* ── Desktop sidebar ─────────────────────────────── */}
       <aside className="app-sidebar">
         <div style={styles.sidebarLogo}>
           <span style={styles.sidebarIcon}>🃏</span>
@@ -91,9 +90,7 @@ export default function HomeScreen({
         </div>
       </aside>
 
-      {/* ── Main content ─────────────────────────────────── */}
       <div className="app-main" style={{ display: 'flex', flexDirection: 'column' }}>
-        {/* Mobile stats bar */}
         <div className="mobile-stats">
           {stats.map(({ label, val }) => (
             <div key={label} style={styles.mobileStatCell}>
@@ -103,7 +100,6 @@ export default function HomeScreen({
           ))}
         </div>
 
-        {/* Mobile header */}
         <div className="mobile-only" style={styles.mobileHeader}>
           <div>
             <h1 style={styles.title}>🃏 Flashi</h1>
@@ -122,7 +118,6 @@ export default function HomeScreen({
         </div>
 
         <div style={styles.list}>
-          {/* ── Topics grid ────────────────────────────── */}
           {(data.topics.length > 0 || data.decks.length === 0) && (
             <div style={styles.section}>
               <div style={styles.sectionHeader}>
@@ -163,7 +158,6 @@ export default function HomeScreen({
             </div>
           )}
 
-          {/* New topic form */}
           {showNewTopic && (
             <div style={styles.newTopicForm}>
               <input
@@ -186,7 +180,6 @@ export default function HomeScreen({
             </div>
           )}
 
-          {/* ── Unassigned decks ───────────────────────── */}
           {unassignedDecks.length > 0 && (
             <div style={styles.section}>
               <div style={styles.sectionHeader}>
@@ -256,7 +249,6 @@ export default function HomeScreen({
           )}
         </div>
 
-        {/* Delete modal */}
         {deleteConfirm && (
           <div style={styles.modalBackdrop}>
             <div style={styles.modal}>
@@ -282,7 +274,6 @@ export default function HomeScreen({
           </div>
         )}
 
-        {/* Assign to topic modal */}
         {assignTarget && onAssignTopic && (
           <div style={styles.modalBackdrop} onClick={() => setAssignTarget(null)}>
             <div style={styles.modal} onClick={(e) => e.stopPropagation()}>
@@ -312,7 +303,6 @@ export default function HomeScreen({
           </div>
         )}
 
-        {/* FABs */}
         <button onClick={onImport} style={styles.fab}>
           + Import deck
         </button>

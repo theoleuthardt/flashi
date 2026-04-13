@@ -20,17 +20,14 @@ export default function AdminScreen({ currentUsername, onBack }: Props) {
   const [success, setSuccess] = useState('');
   const [loading, setLoading] = useState(false);
 
-  // 3-dot menu state
   const [openMenu, setOpenMenu] = useState<string | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
 
-  // Edit modal state
   const [editingUser, setEditingUser] = useState<UserEntry | null>(null);
   const [editPassword, setEditPassword] = useState('');
   const [editIsAdmin, setEditIsAdmin] = useState(false);
   const [editLoading, setEditLoading] = useState(false);
 
-  // Delete confirm state
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
 
   useEffect(() => {
@@ -220,7 +217,6 @@ export default function AdminScreen({ currentUsername, onBack }: Props) {
         </button>
       </div>
 
-      {/* Edit modal */}
       {editingUser && (
         <div style={styles.modalBackdrop} onClick={() => setEditingUser(null)}>
           <div style={styles.modal} onClick={(e) => e.stopPropagation()}>
@@ -267,7 +263,6 @@ export default function AdminScreen({ currentUsername, onBack }: Props) {
         </div>
       )}
 
-      {/* Delete confirm modal */}
       {deleteTarget && (
         <div style={styles.modalBackdrop} onClick={() => setDeleteTarget(null)}>
           <div style={styles.modal} onClick={(e) => e.stopPropagation()}>

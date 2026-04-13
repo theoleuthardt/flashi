@@ -63,7 +63,6 @@ export default function StudyScreen({
 
   return (
     <div style={styles.wrapper}>
-      {/* Header */}
       <div style={styles.header}>
         <button onClick={onBack} style={styles.backBtn}>
           ← Back
@@ -72,17 +71,13 @@ export default function StudyScreen({
         <span style={styles.remaining}>{remaining} left</span>
       </div>
 
-      {/* Progress bar */}
       <div style={styles.progressTrack}>
         <div style={{ ...styles.progressFill, width: `${progress * 100}%` }} />
       </div>
 
-      {/* Card area */}
       <div style={styles.cardArea}>
-        {/* 3D flip card */}
         <div className={`card-scene ${animClass}`}>
           <div className={`card-inner${flipped ? ' is-flipped' : ''}`} style={{ minHeight: 240 }}>
-            {/* Front */}
             <div
               className="card-face card-face--front"
               onClick={() => setFlipped(true)}
@@ -97,7 +92,6 @@ export default function StudyScreen({
               <div style={styles.tapHint}>Tap to flip</div>
             </div>
 
-            {/* Back – also clickable to flip back */}
             <div
               className="card-face card-face--back"
               onClick={() => setFlipped(false)}
@@ -117,7 +111,6 @@ export default function StudyScreen({
           </div>
         </div>
 
-        {/* Navigation row: ← skip back   skip next → */}
         {!flipped && (
           <div style={styles.navRow}>
             <button
@@ -144,7 +137,6 @@ export default function StudyScreen({
           </div>
         )}
 
-        {/* Rating buttons */}
         {flipped && (
           <div style={styles.ratingRow}>
             {RATINGS.map(({ label, color, bg, border, r }) => (

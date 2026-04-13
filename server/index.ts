@@ -12,7 +12,6 @@ const CONFIG_PATH = path.join(DATA_DIR, 'config.json');
 const JWT_SECRET = process.env.JWT_SECRET ?? 'change-me-in-production-please';
 const DIST_DIR = path.join(__dirname, '..', 'dist');
 
-// Ensure data dir exists
 if (!fs.existsSync(DATA_DIR)) {
   fs.mkdirSync(DATA_DIR, { recursive: true });
 }
@@ -26,7 +25,6 @@ interface User {
 
 interface Config {
   users: User[];
-  // legacy field – migrated on first load
   passwordHash?: string;
 }
 
@@ -39,7 +37,7 @@ interface JwtPayload {
 function loadConfig(): Config {
   try {
     const raw = JSON.parse(fs.readFileSync(CONFIG_PATH, 'utf-8')) as Config;
-    // Migrate legacy single-password config
+
     if (raw.passwordHash && (!raw.users || raw.users.length === 0)) {
       raw.users = [{ username: 'admin', passwordHash: raw.passwordHash, isAdmin: true }];
       delete raw.passwordHash;
@@ -65,7 +63,6 @@ const app = express();
 app.use(express.json());
 app.use(cors({ origin: true, credentials: true }));
 
-// Auth middleware
 function requireAuth(req: Request, res: Response, next: NextFunction): void {
   const auth = req.headers.authorization;
   if (!auth?.startsWith('Bearer ')) {
@@ -99,14 +96,11 @@ function requireAdmin(req: Request, res: Response, next: NextFunction): void {
 }
 
 // ── Auth Routes ───────────────────────────────────────────────────
-
-// Check whether first-time setup is needed
 app.get('/api/auth/status', (_req: Request, res: Response) => {
   const config = loadConfig();
   res.json({ setup: config.users.length === 0 });
 });
 
-// First-time admin setup (only works once – when no users exist)
 app.post('/api/auth/setup', async (req: Request, res: Response) => {
   const config = loadConfig();
   if (config.users.length > 0) {
@@ -126,7 +120,6 @@ app.post('/api/auth/setup', async (req: Request, res: Response) => {
   res.json({ token });
 });
 
-// Login
 app.post('/api/auth/login', async (req: Request, res: Response) => {
   const config = loadConfig();
   if (config.users.length === 0) {
@@ -138,7 +131,7 @@ app.post('/api/auth/login', async (req: Request, res: Response) => {
     res.status(400).json({ message: 'Password missing' });
     return;
   }
-  // If only one user exists and no username provided, log in as that user
+
   const user =
     config.users.length === 1 && !username
       ? config.users[0]
@@ -157,20 +150,16 @@ app.post('/api/auth/login', async (req: Request, res: Response) => {
   res.json({ token, username: user.username, isAdmin: user.isAdmin });
 });
 
-// Token verification
 app.get('/api/auth/verify', requireAuth, (_req: Request, res: Response) => {
   res.json({ ok: true });
 });
 
 // ── Admin Routes ──────────────────────────────────────────────────
-
-// List users (admin only)
 app.get('/api/admin/users', requireAdmin, (_req: Request, res: Response) => {
   const config = loadConfig();
   res.json({ users: config.users.map(({ username, isAdmin }) => ({ username, isAdmin })) });
 });
 
-// Create user (admin only)
 app.post('/api/admin/users', requireAdmin, async (req: Request, res: Response) => {
   const config = loadConfig();
   const { username, password } = req.body as { username?: string; password?: string };
@@ -192,7 +181,6 @@ app.post('/api/admin/users', requireAdmin, async (req: Request, res: Response) =
   res.json({ ok: true });
 });
 
-// Update user (admin only)
 app.patch('/api/admin/users/:username', requireAdmin, async (req: Request, res: Response) => {
   const config = loadConfig();
   const auth = req.headers.authorization!;
@@ -223,7 +211,6 @@ app.patch('/api/admin/users/:username', requireAdmin, async (req: Request, res: 
   res.json({ ok: true });
 });
 
-// Delete user (admin only, cannot delete self)
 app.delete('/api/admin/users/:username', requireAdmin, (req: Request, res: Response) => {
   const config = loadConfig();
   const auth = req.headers.authorization!;
@@ -239,8 +226,6 @@ app.delete('/api/admin/users/:username', requireAdmin, (req: Request, res: Respo
 
 // ── Static Files ──────────────────────────────────────────────────
 app.use(express.static(DIST_DIR));
-
-// SPA fallback
 app.get('*', (_req: Request, res: Response) => {
   res.sendFile(path.join(DIST_DIR, 'index.html'));
 });
