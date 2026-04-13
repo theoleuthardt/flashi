@@ -249,6 +249,6 @@ app.get('*', (_req: Request, res: Response) => {
 app.listen(PORT, () => {
   console.log(`✓ Flashi running at http://localhost:${PORT}`);
   if (JWT_SECRET === 'change-me-in-production-please') {
-    console.warn('⚠  JWT_SECRET not set – please update docker-compose.yml!');
+    console.warn('⚠  JWT_SECRET not set – please update podman-compose.yml!');
   }
 });

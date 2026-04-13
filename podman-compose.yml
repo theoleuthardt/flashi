@@ -1,6 +1,8 @@
 services:
   flashi:
-    build: .
+    build:
+      context: .
+      dockerfile: Containerfile
     container_name: flashi
     restart: unless-stopped
     ports:
