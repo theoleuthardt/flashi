@@ -1,0 +1,18 @@
+services:
+  flashi:
+    build: .
+    container_name: flashi
+    restart: unless-stopped
+    ports:
+      - "4500:3001"
+    volumes:
+      - flashi-data:/data
+    environment:
+      # generate with: openssl rand -hex 32
+      - JWT_SECRET=BITTE_AENDERN_langer_zufaelliger_string_hier
+      - NODE_ENV=production
+      - PORT=3001
+      - DATA_DIR=/data
+
+volumes:
+  flashi-data:

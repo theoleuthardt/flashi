@@ -1,0 +1,25 @@
+export const C = {
+  bg: 'var(--bg)',
+  surface: 'var(--surface)',
+  surface2: 'var(--surface2)',
+  border: 'var(--border)',
+  accent: 'var(--accent)',
+  text: 'var(--text)',
+  muted: 'var(--muted)',
+  mutedLight: 'var(--muted-light)',
+  again: 'var(--again)',
+  hard: 'var(--hard)',
+  good: 'var(--good)',
+  easy: 'var(--easy)',
+
+  // Pre-computed alpha variants
+  accentBorder: 'var(--accent-border)',
+  againBg: 'var(--again-bg)',
+  againBorder: 'var(--again-border)',
+  hardBg: 'var(--hard-bg)',
+  hardBorder: 'var(--hard-border)',
+  goodBg: 'var(--good-bg)',
+  goodBorder: 'var(--good-border)',
+  easyBg: 'var(--easy-bg)',
+  easyBorder: 'var(--easy-border)',
+} as const;
