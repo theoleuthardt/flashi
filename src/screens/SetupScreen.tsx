@@ -37,7 +37,8 @@ export default function SetupScreen({ onSetup }: Props) {
   return (
     <div style={styles.wrapper}>
       <div style={styles.card}>
-        <h1 style={styles.title}>🃏 Flashi</h1>
+        <img src="/icon-128.png" alt="Flashi" style={styles.icon} />
+        <h1 style={styles.title}>Flashi</h1>
         <p style={styles.subtitle}>Welcome! Create your admin account.</p>
 
         <label style={styles.label}>Username</label>
@@ -105,6 +106,13 @@ const styles: Record<string, React.CSSProperties> = {
     display: 'flex',
     flexDirection: 'column',
     gap: 4,
+  },
+  icon: {
+    width: 52,
+    height: 52,
+    objectFit: 'contain',
+    alignSelf: 'center',
+    marginBottom: 4,
   },
   title: {
     fontFamily: "'Playfair Display', serif",

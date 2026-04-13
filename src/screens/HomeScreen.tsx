@@ -66,7 +66,7 @@ export default function HomeScreen({
     <div className="app-layout">
       <aside className="app-sidebar">
         <div style={styles.sidebarLogo}>
-          <span style={styles.sidebarIcon}>🃏</span>
+          <img src="/icon-128.png" alt="Flashi" style={styles.sidebarIcon} />
           <h1 style={styles.sidebarTitle}>Flashi</h1>
           <p style={styles.sidebarSub}>Spaced Repetition</p>
         </div>
@@ -102,7 +102,10 @@ export default function HomeScreen({
 
         <div className="mobile-only" style={styles.mobileHeader}>
           <div>
-            <h1 style={styles.title}>🃏 Flashi</h1>
+            <h1 style={styles.title}>
+              <img src="/icon-128.png" alt="" style={{ width: 28, height: 28, objectFit: 'contain', verticalAlign: 'middle', marginRight: 8 }} />
+              Flashi
+            </h1>
             <p style={styles.subtitle}>Spaced Repetition</p>
           </div>
           <div style={{ display: 'flex', gap: 6 }}>
@@ -314,10 +317,9 @@ export default function HomeScreen({
 const styles: Record<string, React.CSSProperties> = {
   sidebarLogo: { display: 'flex', flexDirection: 'column', alignItems: 'flex-start' },
   sidebarIcon: {
-    fontFamily: "'Playfair Display', serif",
-    fontSize: 36,
-    color: C.accent,
-    lineHeight: 1,
+    width: 36,
+    height: 36,
+    objectFit: 'contain',
     marginBottom: 4,
   },
   sidebarTitle: {

@@ -91,15 +91,6 @@ From there you can add or remove user accounts.
 > **Tip:** For HTTPS (required for reliable PWA behaviour) place an Nginx reverse proxy with Let's Encrypt in front.
 
 ---
-
-## PWA Icons
-
-Place these files in `/public/`:
-- `icon-192.png` (192 × 192 px)
-- `icon-512.png` (512 × 512 px)
-
----
-
 ## Project Structure
 
 ```
@@ -130,3 +121,9 @@ flashi/
 | Backend | Express + bcryptjs + jsonwebtoken |
 | Storage | localStorage (client) · JSON file (server config) |
 | Containerisation | Docker + Docker Compose |
+
+---
+
+## Credits
+
+- <a href="https://www.flaticon.com/free-icons/joker" title="joker icons">Joker icons created by riajulislam - Flaticon</a>

@@ -28,7 +28,7 @@ export default function LoginScreen({ onLogin }: Props) {
   return (
     <div style={styles.wrapper}>
       <div style={styles.card}>
-        <div style={styles.icon}>🃏</div>
+        <img src="/icon-128.png" alt="Flashi" style={styles.icon} />
         <h1 style={styles.title}>Flashi</h1>
         <p style={styles.subtitle}>Spaced Repetition</p>
 
@@ -89,11 +89,11 @@ const styles: Record<string, React.CSSProperties> = {
     gap: 4,
   },
   icon: {
-    fontFamily: "'Playfair Display', serif",
-    fontSize: 42,
-    color: C.accent,
+    width: 52,
+    height: 52,
+    objectFit: 'contain',
     marginBottom: 4,
-    textAlign: 'center',
+    alignSelf: 'center',
   },
   title: {
     fontFamily: "'Playfair Display', serif",
