@@ -1,3 +1,5 @@
+import type { FlashiData } from '../types';
+
 const TOKEN_KEY = 'flashi-token';
 
 export function getToken(): string | null {
@@ -73,6 +75,47 @@ export async function verifyToken(): Promise<boolean> {
   } catch {
     return false;
   }
+}
+
+// ── User Data ─────────────────────────────────────────────────────
+
+export async function loadUserData(): Promise<FlashiData> {
+  return request<FlashiData>('/data');
+}
+
+export async function saveUserData(data: FlashiData): Promise<void> {
+  await request('/data', {
+    method: 'PUT',
+    body: JSON.stringify(data),
+  });
+}
+
+// ── User Settings ─────────────────────────────────────────────────
+
+export interface UserSettings {
+  discordWebhook: string;
+  notificationTime: string; // HH:MM
+  notificationsEnabled: boolean;
+}
+
+export async function getUserSettings(): Promise<UserSettings> {
+  return request<UserSettings>('/user/settings');
+}
+
+export async function saveUserSettings(settings: UserSettings): Promise<void> {
+  await request('/user/settings', {
+    method: 'PUT',
+    body: JSON.stringify(settings),
+  });
+}
+
+// ── Auth ──────────────────────────────────────────────────────────
+
+export async function changePassword(currentPassword: string, newPassword: string): Promise<void> {
+  await request('/auth/change-password', {
+    method: 'POST',
+    body: JSON.stringify({ currentPassword, newPassword }),
+  });
 }
 
 // ── Admin ─────────────────────────────────────────────────────────
