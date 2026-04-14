@@ -1,6 +1,8 @@
 services:
   flashi:
-    image: ghcr.io/theoleuthardt/flashi:stable
+    build:
+      context: .
+      dockerfile: Containerfile
     container_name: flashi
     restart: unless-stopped
     ports:
