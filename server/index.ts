@@ -217,9 +217,7 @@ function sendDiscordWebhook(url: string, message: string): void {
     req.on('error', () => {});
     req.write(body);
     req.end();
-  } catch {
-    // Invalid URL or network error
-  }
+  } catch {}
 }
 
 app.get('/api/data', requireAuth, (req: Request, res: Response) => {
@@ -385,11 +383,10 @@ cron.schedule('* * * * *', () => {
       }
 
       if (dueCount > 0) {
-        const message = `📚 **Flashi reminder**: You have **${dueCount}** card${dueCount !== 1 ? 's' : ''} due today, ${user.username}! Time to study.`;
+        const message = `📚 **Reminder**: You have **${dueCount}** card${dueCount !== 1 ? 's' : ''} due today, ${user.username}! Time to study.`;
         sendDiscordWebhook(settings.discordWebhook, message);
       }
     } catch {
-      // Skip this user on error
     }
   }
 });

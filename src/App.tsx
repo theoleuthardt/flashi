@@ -31,7 +31,6 @@ export default function App() {
   const [sessionCount, setSessionCount] = useState(0);
   // fault tracking: topicId → fault card IDs accumulated in the topic session
   const [topicFaults, setTopicFaults] = useState<Record<string, Set<string>>>({});
-  // quiz state
   const [activeQuizId, setActiveQuizId] = useState<string | null>(null);
   const [quizAnswers, setQuizAnswers] = useState<QuizAnswer[]>([]);
   const [theme, setTheme] = useState<'dark' | 'light'>(() => {
@@ -124,7 +123,6 @@ export default function App() {
     setScreen('study');
   }
 
-  // Start studying a custom queue across decks (for fault replay or daily mix)
   function startMultiDeckStudy(cards: Card[]) {
     if (!cards.length) return;
     setStudyDeckId('__multi__');
@@ -134,7 +132,6 @@ export default function App() {
     setScreen('study');
   }
 
-  // Daily mix: random sample of due cards from all decks in the active topic
   function startDailyMix(topicId: string) {
     const topicDecks = data.decks.filter((d) => d.topicId === topicId);
     const allDue: Card[] = [];
@@ -142,12 +139,10 @@ export default function App() {
       allDue.push(...getDueCards(data.cards[deck.id] ?? []));
     }
     if (!allDue.length) return;
-    // Shuffle and take up to 20
     const shuffled = [...allDue].sort(() => Math.random() - 0.5).slice(0, 20);
     startMultiDeckStudy(shuffled);
   }
 
-  // Repeat fault cards accumulated for a topic
   function repeatTopicFaults(topicId: string) {
     const faultIds = topicFaults[topicId];
     if (!faultIds?.size) return;
@@ -179,7 +174,6 @@ export default function App() {
     const card = queue[0];
     const updated = applyRating(card, r);
 
-    // Track faults for the active topic
     if (r === 0 && activeTopicId) {
       setTopicFaults((prev) => {
         const existing = prev[activeTopicId] ?? new Set<string>();
@@ -187,10 +181,8 @@ export default function App() {
       });
     }
 
-    // Update card in the correct deck (supports multi-deck study sessions)
     let newData = data;
     if (studyDeckId === '__multi__') {
-      // Find which deck contains this card
       for (const [deckId, cards] of Object.entries(data.cards)) {
         if (cards.some((c) => c.id === card.id)) {
           const dc = cards.map((c) => (c.id === card.id ? updated : c));

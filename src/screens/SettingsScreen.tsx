@@ -8,7 +8,6 @@ interface Props {
 }
 
 export default function SettingsScreen({ onBack }: Props) {
-  // Password change
   const [currentPw, setCurrentPw] = useState('');
   const [newPw, setNewPw] = useState('');
   const [confirmPw, setConfirmPw] = useState('');
@@ -16,7 +15,6 @@ export default function SettingsScreen({ onBack }: Props) {
   const [pwSuccess, setPwSuccess] = useState('');
   const [pwLoading, setPwLoading] = useState(false);
 
-  // Notification settings
   const [settings, setSettings] = useState<UserSettings>({
     discordWebhook: '',
     notificationTime: '08:00',
