@@ -134,12 +134,9 @@ export default function App() {
 
   function startDailyMix(topicId: string) {
     const topicDecks = data.decks.filter((d) => d.topicId === topicId);
-    const allDue: Card[] = [];
-    for (const deck of topicDecks) {
-      allDue.push(...getDueCards(data.cards[deck.id] ?? []));
-    }
-    if (!allDue.length) return;
-    const shuffled = [...allDue].sort(() => Math.random() - 0.5).slice(0, 20);
+    const allCards: Card[] = topicDecks.flatMap((d) => data.cards[d.id] ?? []);
+    if (!allCards.length) return;
+    const shuffled = [...allCards].sort(() => Math.random() - 0.5).slice(0, 20);
     startMultiDeckStudy(shuffled);
   }
 
