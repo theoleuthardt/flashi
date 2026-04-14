@@ -38,26 +38,58 @@ npm run format
 
 ---
 
-## Docker Deployment
+## Deployment
 
-### 1. Set a secure JWT secret
+A `stable` image is published to the GitHub Container Registry automatically on every merge to `main`.
+
+| Tag | Source | Recommended for |
+|---|---|---|
+| `stable` | `main` branch | self-hosting |
+| — | `dev` branch | not published — build from source |
+
+### 1. Download a compose file
+
+| File | Runtime | Image |
+|---|---|---|
+| `podman-compose.yml` | Podman | pre-built `stable` |
+| `podman-compose.build.yml` | Podman | build from source |
+| `docker-compose.yml` | Docker | pre-built `stable` |
+| `docker-compose.build.yml` | Docker | build from source |
 
 ```bash
-# Generate a random secret
+# Example — Podman with pre-built image
+curl -O https://raw.githubusercontent.com/theoleuthardt/flashi/main/podman-compose.yml
+```
+
+### 2. Set a secure JWT secret
+
+```bash
 openssl rand -hex 32
 ```
 
-Paste the output into `docker-compose.yml` next to `JWT_SECRET=`.
+Paste the output into the compose file next to `JWT_SECRET=`.
 
-### 2. Start
+### 3. Start
 
 ```bash
+# Podman — pre-built stable image
+podman-compose -f podman-compose.yml up -d
+
+# Podman — build from source
+git clone https://github.com/theoleuthardt/flashi.git && cd flashi
+podman-compose -f podman-compose.build.yml up -d --build
+
+# Docker — pre-built stable image
 docker compose up -d
+
+# Docker — build from source
+git clone https://github.com/theoleuthardt/flashi.git && cd flashi
+docker compose -f docker-compose.build.yml up -d --build
 ```
 
-The app runs on `http://your-server:3001`.
+The app runs on `http://your-server:4500` (Podman) or `http://your-server:3001` (Docker).
 
-### 3. First-time setup
+### 4. First-time setup
 
 Open the app in a browser — you will be prompted to create an admin account (username + password).
 
@@ -139,7 +171,7 @@ From there you can add or remove user accounts.
 
 ## PWA Installation (iPhone)
 
-1. Open Safari → `http://your-server:3001`
+1. Open Safari → `http://your-server:4500` (Podman) or `http://your-server:3001` (Docker)
 2. Tap the Share button → **Add to Home Screen**
 3. Done — Flashi runs as a native-looking app
 

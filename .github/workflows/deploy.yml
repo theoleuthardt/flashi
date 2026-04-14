@@ -28,4 +28,4 @@ jobs:
             set -e
             cd ${{ secrets.DEPLOY_PATH }}
             git pull origin main
-            podman-compose -f podman-compose.yml up -d --build
+            podman-compose -f podman-compose.build.yml up -d --build
