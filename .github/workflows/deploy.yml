@@ -5,9 +5,37 @@ on:
     branches: [main]
 
 jobs:
-  deploy:
-    name: Deploy to server
+  publish:
+    name: Build and push image
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: Containerfile
+          push: true
+          tags: |
+            ghcr.io/${{ github.repository }}:stable
+            ghcr.io/${{ github.repository }}:${{ github.sha }}
+
+  deploy:
+    name: Deploy to homelab
+    runs-on: ubuntu-latest
+    needs: publish
 
     steps:
       - name: Connect to WireGuard VPN
@@ -27,5 +55,5 @@ jobs:
           script: |
             set -e
             cd ${{ secrets.DEPLOY_PATH }}
-            git pull origin main
-            podman-compose -f podman-compose.build.yml up -d --build
+            podman-compose -f podman-compose.yml pull
+            podman-compose -f podman-compose.yml up -d
