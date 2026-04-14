@@ -22,13 +22,17 @@
   --accent-shadow:    rgba(85,133,255,0.38);
   --accent-shadow-sm: rgba(85,133,255,0.22);
   --again-bg:         rgba(224,82,82,0.10);
+  --again-bg-strong:  rgba(224,82,82,0.22);
   --again-border:     rgba(224,82,82,0.34);
   --again-subtle:     rgba(224,82,82,0.27);
   --hard-bg:          rgba(208,128,48,0.10);
+  --hard-bg-strong:   rgba(208,128,48,0.22);
   --hard-border:      rgba(208,128,48,0.34);
   --good-bg:          rgba(56,184,100,0.10);
+  --good-bg-strong:   rgba(56,184,100,0.22);
   --good-border:      rgba(56,184,100,0.34);
   --easy-bg:          rgba(90,158,255,0.10);
+  --easy-bg-strong:   rgba(90,158,255,0.22);
   --easy-border:      rgba(90,158,255,0.34);
 }
 
@@ -52,13 +56,17 @@
   --accent-shadow:    rgba(50,88,232,0.28);
   --accent-shadow-sm: rgba(50,88,232,0.16);
   --again-bg:         rgba(204,34,34,0.09);
+  --again-bg-strong:  rgba(204,34,34,0.20);
   --again-border:     rgba(204,34,34,0.32);
   --again-subtle:     rgba(204,34,34,0.25);
   --hard-bg:          rgba(176,96,16,0.09);
+  --hard-bg-strong:   rgba(176,96,16,0.20);
   --hard-border:      rgba(176,96,16,0.32);
   --good-bg:          rgba(26,136,68,0.09);
+  --good-bg-strong:   rgba(26,136,68,0.20);
   --good-border:      rgba(26,136,68,0.32);
   --easy-bg:          rgba(50,88,232,0.09);
+  --easy-bg-strong:   rgba(50,88,232,0.20);
   --easy-border:      rgba(50,88,232,0.32);
 }
 
@@ -177,6 +185,7 @@ button:active {
   gap: 0;
   border-bottom: 1px solid var(--border);
   background: var(--surface);
+  padding-top: env(safe-area-inset-top);
 }
 @media (min-width: 768px) {
   .mobile-stats {
