@@ -15,12 +15,28 @@ interface Props {
   onBack: () => void;
 }
 
+function SpeakerIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+      <path d="M2 6h2.5L9 2v12L4.5 10H2V6z" fill="currentColor"/>
+      <path d="M11 5.5a4 4 0 010 5M12.5 3.5a7 7 0 010 9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+    </svg>
+  );
+}
+
 const RATINGS: Array<{ label: string; color: string; bg: string; border: string; r: Rating }> = [
-  { label: 'Again', color: C.again, bg: C.againBg, border: C.againBorder, r: 0 },
-  { label: 'Hard', color: C.hard, bg: C.hardBg, border: C.hardBorder, r: 1 },
-  { label: 'Good', color: C.good, bg: C.goodBg, border: C.goodBorder, r: 2 },
-  { label: 'Easy', color: C.easy, bg: C.easyBg, border: C.easyBorder, r: 3 },
+  { label: 'Again', color: C.again, bg: 'var(--again-bg-strong)', border: C.againBorder, r: 0 },
+  { label: 'Hard', color: C.hard, bg: 'var(--hard-bg-strong)', border: C.hardBorder, r: 1 },
+  { label: 'Good', color: C.good, bg: 'var(--good-bg-strong)', border: C.goodBorder, r: 2 },
+  { label: 'Easy', color: C.easy, bg: 'var(--easy-bg-strong)', border: C.easyBorder, r: 3 },
 ];
+
+function speak(text: string) {
+  if (!('speechSynthesis' in window)) return;
+  window.speechSynthesis.cancel();
+  const utt = new SpeechSynthesisUtterance(text);
+  window.speechSynthesis.speak(utt);
+}
 
 export default function StudyScreen({
   deck,
@@ -84,11 +100,18 @@ export default function StudyScreen({
               style={{
                 ...styles.face,
                 background: C.surface,
-                border: `1px solid ${C.accentBorder}`,
+                border: `2px solid ${C.accentBorder}`,
               }}
             >
               <div style={styles.sideLabel}>Front</div>
-              <div style={{ ...styles.cardText, fontSize: 30 }}>{card.front}</div>
+              <div style={{ ...styles.cardText, fontSize: 32, fontWeight: 600 }}>{card.front}</div>
+              <button
+                style={styles.speakBtn}
+                onClick={(e) => { e.stopPropagation(); speak(card.front); }}
+                title="Read aloud"
+              >
+                <SpeakerIcon />
+              </button>
               <div style={styles.tapHint}>Tap to flip</div>
             </div>
 
@@ -98,11 +121,18 @@ export default function StudyScreen({
               style={{
                 ...styles.face,
                 background: C.surface,
-                border: `1px solid ${C.border}`,
+                border: `2px solid ${C.border}`,
               }}
             >
               <div style={styles.sideLabel}>Back</div>
-              <div style={{ ...styles.cardText, fontSize: 20 }}>{card.back}</div>
+              <div style={{ ...styles.cardText, fontSize: 22 }}>{card.back}</div>
+              <button
+                style={styles.speakBtn}
+                onClick={(e) => { e.stopPropagation(); speak(card.back); }}
+                title="Read aloud"
+              >
+                <SpeakerIcon />
+              </button>
               <div style={styles.tapHint}>Tap to flip back</div>
               <div style={styles.cardMeta}>
                 {card.reps} reps · interval: {card.interval}d
@@ -220,12 +250,12 @@ const styles: Record<string, React.CSSProperties> = {
     userSelect: 'none',
   },
   sideLabel: {
-    color: C.muted,
-    fontSize: 10,
-    letterSpacing: '0.12em',
+    color: C.mutedLight,
+    fontSize: 11,
+    letterSpacing: '0.10em',
     textTransform: 'uppercase',
     marginBottom: 20,
-    fontWeight: 500,
+    fontWeight: 600,
   },
   cardText: {
     fontFamily: "'Playfair Display', serif",
@@ -233,8 +263,23 @@ const styles: Record<string, React.CSSProperties> = {
     textAlign: 'center',
     lineHeight: 1.5,
   },
-  tapHint: { position: 'absolute', bottom: 14, color: C.muted, fontSize: 11 },
-  cardMeta: { position: 'absolute', top: 14, color: C.muted, fontSize: 10 },
+  tapHint: { position: 'absolute', bottom: 14, color: C.mutedLight, fontSize: 11 },
+  cardMeta: { position: 'absolute', top: 14, color: C.mutedLight, fontSize: 10 },
+  speakBtn: {
+    position: 'absolute',
+    bottom: 14,
+    right: 14,
+    background: 'none',
+    border: `1px solid ${C.border}`,
+    borderRadius: 8,
+    color: C.mutedLight,
+    cursor: 'pointer',
+    padding: '5px 7px',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    opacity: 0.7,
+  },
   navRow: {
     display: 'flex',
     alignItems: 'center',
@@ -275,6 +320,6 @@ const styles: Record<string, React.CSSProperties> = {
     fontWeight: 600,
     fontFamily: "'DM Sans', sans-serif",
   },
-  intervalHint: { fontSize: 10, fontWeight: 400, opacity: 0.65 },
+  intervalHint: { fontSize: 10, fontWeight: 400, opacity: 0.85 },
   sessionInfo: { marginTop: 16, color: C.muted, fontSize: 12 },
 };
