@@ -25,7 +25,6 @@ export default function QuizResultsScreen({ quiz, answers, onBack, onRetry }: Pr
       </div>
 
       <div style={styles.body}>
-        {/* Score card */}
         <div style={styles.scoreCard}>
           <p style={styles.scoreLabel}>Your score</p>
           <div style={styles.scoreRow}>
@@ -33,7 +32,6 @@ export default function QuizResultsScreen({ quiz, answers, onBack, onRetry }: Pr
             <span style={styles.scoreFraction}>{correct} / {total}</span>
           </div>
 
-          {/* Score bar */}
           <div style={styles.barTrack}>
             <div style={{ ...styles.barCorrect, width: `${pct}%`, background: scoreColor }} />
           </div>
@@ -46,7 +44,6 @@ export default function QuizResultsScreen({ quiz, answers, onBack, onRetry }: Pr
           </p>
         </div>
 
-        {/* Fault review */}
         {faults.length > 0 && (
           <div style={styles.section}>
             <h3 style={styles.sectionTitle}>Review — {faults.length} wrong</h3>

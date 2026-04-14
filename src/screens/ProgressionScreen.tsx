@@ -55,9 +55,6 @@ const barStyles: Record<string, React.CSSProperties> = {
 };
 
 export default function ProgressionScreen({ data, onBack }: Props) {
-  const today = todayStr();
-
-  // Overall stats
   const allCards = Object.values(data.cards).flat();
   const overall = cardStats(allCards);
   const overallPct = overall.total > 0 ? Math.round((overall.learned / overall.total) * 100) : 0;
@@ -71,7 +68,6 @@ export default function ProgressionScreen({ data, onBack }: Props) {
       </div>
 
       <div style={styles.body}>
-        {/* Overall summary */}
         <div style={styles.overallCard}>
           <p style={styles.overallLabel}>Overall completion</p>
           <div style={styles.overallRow}>
@@ -87,14 +83,12 @@ export default function ProgressionScreen({ data, onBack }: Props) {
           <StackedBar learned={overall.learned} due={overall.due} newCards={overall.new} total={overall.total} />
         </div>
 
-        {/* Legend */}
         <div style={styles.legend}>
           <span style={styles.legendItem}><span style={{ ...styles.legendDot, background: C.good }} /> Learned</span>
           <span style={styles.legendItem}><span style={{ ...styles.legendDot, background: C.accent }} /> Due today</span>
           <span style={styles.legendItem}><span style={{ ...styles.legendDot, background: C.border }} /> New</span>
         </div>
 
-        {/* Per topic */}
         {data.topics.length === 0 && data.decks.length === 0 && (
           <div style={styles.empty}>No decks yet — create a topic and import a deck to see your progression.</div>
         )}
@@ -117,7 +111,6 @@ export default function ProgressionScreen({ data, onBack }: Props) {
               </div>
               <StackedBar learned={stats.learned} due={stats.due} newCards={stats.new} total={stats.total} />
 
-              {/* Per deck breakdown */}
               {topicDecks.length > 0 && (
                 <div style={styles.deckList}>
                   {topicDecks.map((deck) => {
@@ -145,7 +138,6 @@ export default function ProgressionScreen({ data, onBack }: Props) {
           );
         })}
 
-        {/* Uncategorised decks */}
         {data.decks.filter((d) => !d.topicId).length > 0 && (
           <div style={styles.topicCard}>
             <div style={styles.topicHeader}>
@@ -177,7 +169,6 @@ export default function ProgressionScreen({ data, onBack }: Props) {
           </div>
         )}
 
-        {/* Due today hint */}
         {overall.due > 0 && (
           <div style={styles.dueHint}>
             📅 You have <strong>{overall.due}</strong> card{overall.due !== 1 ? 's' : ''} due today across all decks.

@@ -61,7 +61,6 @@ export default function TopicScreen({
 
   return (
     <div className="app-layout">
-      {/* Desktop sidebar */}
       <aside className="app-sidebar">
         <button onClick={onBack} style={styles.backBtn}>
           ← Back
@@ -83,9 +82,7 @@ export default function TopicScreen({
         </button>
       </aside>
 
-      {/* Main */}
       <div className="app-main" style={{ display: 'flex', flexDirection: 'column' }}>
-        {/* Mobile stats bar */}
         <div className="mobile-stats">
           {stats.map(({ label, val }) => (
             <div key={label} style={styles.mobileStatCell}>
@@ -95,7 +92,6 @@ export default function TopicScreen({
           ))}
         </div>
 
-        {/* Mobile header */}
         <div className="mobile-only" style={styles.mobileHeader}>
           <button onClick={onBack} style={styles.backBtn}>
             ← Back
@@ -106,7 +102,6 @@ export default function TopicScreen({
           </button>
         </div>
 
-        {/* Deck list */}
         <div style={styles.list}>
           {decks.length === 0 && (
             <div style={styles.empty}>
@@ -174,7 +169,6 @@ export default function TopicScreen({
           })}
           </div>
 
-          {/* Quizzes section */}
           {quizzes.length > 0 && (
             <div style={{ marginTop: 24 }}>
               <p style={styles.quizSectionTitle}>Quizzes</p>
@@ -200,7 +194,6 @@ export default function TopicScreen({
           )}
         </div>
 
-        {/* Delete quiz modal */}
         {deleteQuizConfirm && (
           <div style={styles.modalBackdrop}>
             <div style={styles.modal}>
@@ -238,7 +231,6 @@ export default function TopicScreen({
           </button>
         </div>
 
-        {/* Delete deck modal */}
         {deleteConfirm && (
           <div style={styles.modalBackdrop}>
             <div style={styles.modal}>
@@ -264,7 +256,6 @@ export default function TopicScreen({
           </div>
         )}
 
-        {/* Delete topic modal */}
         {confirmTopic && (
           <div style={styles.modalBackdrop}>
             <div style={styles.modal}>

@@ -7,7 +7,6 @@ import https from 'https';
 import cors from 'cors';
 import cron from 'node-cron';
 
-// ── Config ────────────────────────────────────────────────────────
 const PORT = parseInt(process.env.PORT ?? '3001', 10);
 const DATA_DIR = process.env.DATA_DIR ?? path.join(__dirname, '..', '.data');
 const CONFIG_PATH = path.join(DATA_DIR, 'config.json');
@@ -18,7 +17,6 @@ if (!fs.existsSync(DATA_DIR)) {
   fs.mkdirSync(DATA_DIR, { recursive: true });
 }
 
-// ── Types ─────────────────────────────────────────────────────────
 interface User {
   username: string;
   passwordHash: string;
@@ -51,7 +49,6 @@ interface FlashiUserData {
   cards: Record<string, FlashiCard[]>;
 }
 
-// ── Helpers ───────────────────────────────────────────────────────
 function loadConfig(): Config {
   try {
     const raw = JSON.parse(fs.readFileSync(CONFIG_PATH, 'utf-8')) as Config;
@@ -76,7 +73,6 @@ function signToken(payload: JwtPayload): string {
   return jwt.sign(payload, JWT_SECRET, { expiresIn: '30d' });
 }
 
-// ── App ───────────────────────────────────────────────────────────
 const app = express();
 app.use(express.json());
 app.use(cors({ origin: true, credentials: true }));
@@ -113,7 +109,6 @@ function requireAdmin(req: Request, res: Response, next: NextFunction): void {
   }
 }
 
-// ── Auth Routes ───────────────────────────────────────────────────
 app.get('/api/auth/status', (_req: Request, res: Response) => {
   const config = loadConfig();
   res.json({ setup: config.users.length === 0 });
@@ -172,7 +167,6 @@ app.get('/api/auth/verify', requireAuth, (_req: Request, res: Response) => {
   res.json({ ok: true });
 });
 
-// ── User Data Routes ──────────────────────────────────────────────
 function getUsernameFromToken(req: Request): string | null {
   const auth = req.headers.authorization;
   if (!auth?.startsWith('Bearer ')) return null;
@@ -256,7 +250,6 @@ app.put('/api/data', requireAuth, (req: Request, res: Response) => {
   }
 });
 
-// ── User Settings Routes ──────────────────────────────────────────
 app.get('/api/user/settings', requireAuth, (req: Request, res: Response) => {
   const username = getUsernameFromToken(req);
   if (!username) { res.status(401).json({ message: 'Unauthorized' }); return; }
@@ -271,7 +264,6 @@ app.put('/api/user/settings', requireAuth, (req: Request, res: Response) => {
   res.json({ ok: true });
 });
 
-// ── Change Password ───────────────────────────────────────────────
 app.post('/api/auth/change-password', requireAuth, async (req: Request, res: Response) => {
   const username = getUsernameFromToken(req);
   if (!username) { res.status(401).json({ message: 'Unauthorized' }); return; }
@@ -297,7 +289,6 @@ app.post('/api/auth/change-password', requireAuth, async (req: Request, res: Res
   res.json({ ok: true });
 });
 
-// ── Admin Routes ──────────────────────────────────────────────────
 app.get('/api/admin/users', requireAdmin, (_req: Request, res: Response) => {
   const config = loadConfig();
   res.json({ users: config.users.map(({ username, isAdmin }) => ({ username, isAdmin })) });
@@ -367,13 +358,11 @@ app.delete('/api/admin/users/:username', requireAdmin, (req: Request, res: Respo
   res.json({ ok: true });
 });
 
-// ── Static Files ──────────────────────────────────────────────────
 app.use(express.static(DIST_DIR));
 app.get('*', (_req: Request, res: Response) => {
   res.sendFile(path.join(DIST_DIR, 'index.html'));
 });
 
-// ── Discord Notification Cron ─────────────────────────────────────
 // Runs every minute, checks if any user's notification time matches
 cron.schedule('* * * * *', () => {
   const now = new Date();
@@ -405,7 +394,6 @@ cron.schedule('* * * * *', () => {
   }
 });
 
-// ── Start ─────────────────────────────────────────────────────────
 app.listen(PORT, () => {
   console.log(`✓ Flashi running at http://localhost:${PORT}`);
   if (JWT_SECRET === 'change-me-in-production-please') {
