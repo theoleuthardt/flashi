@@ -34,7 +34,6 @@ export default function AdminScreen({ currentUsername, onBack }: Props) {
     void loadUsers();
   }, []);
 
-  // Close menu on outside click
   useEffect(() => {
     if (!openMenu) return;
     function handleClick(e: MouseEvent) {

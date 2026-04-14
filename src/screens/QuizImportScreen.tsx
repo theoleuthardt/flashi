@@ -5,19 +5,27 @@ import { C } from '../theme';
 interface Props {
   topics: Topic[];
   initialTopicId?: string;
-  onImport: (name: string, cards: Array<{ front: string; back: string }>, topicId?: string) => void;
+  onImport: (name: string, questions: Array<{ question: string; options: string[]; correct: number }>, topicId?: string) => void;
   onBack: () => void;
 }
 
 const EXAMPLE = `{
-  "name": "Lesson 1 – Cyrillic Alphabet",
-  "cards": [
-    { "front": "А а", "back": "A (as in father)" },
-    { "front": "Б б", "back": "B (as in book)" }
+  "name": "Russian Capitals Quiz",
+  "questions": [
+    {
+      "question": "What is the capital of Russia?",
+      "options": ["Kyiv", "Moscow", "Minsk", "Warsaw"],
+      "correct": 1
+    },
+    {
+      "question": "What does 'Привет' mean?",
+      "options": ["Goodbye", "Thank you", "Hello", "Please"],
+      "correct": 2
+    }
   ]
 }`;
 
-export default function ImportScreen({ topics, initialTopicId, onImport, onBack }: Props) {
+export default function QuizImportScreen({ topics, initialTopicId, onImport, onBack }: Props) {
   const [json, setJson] = useState('');
   const [error, setError] = useState('');
   const [topicId, setTopicId] = useState(initialTopicId ?? '');
@@ -27,25 +35,33 @@ export default function ImportScreen({ topics, initialTopicId, onImport, onBack 
     try {
       const parsed = JSON.parse(json) as unknown;
       if (
-        typeof parsed !== 'object' ||
-        parsed === null ||
-        !('name' in parsed) ||
-        !('cards' in parsed) ||
+        typeof parsed !== 'object' || parsed === null ||
+        !('name' in parsed) || !('questions' in parsed) ||
         typeof (parsed as { name: unknown }).name !== 'string' ||
-        !Array.isArray((parsed as { cards: unknown }).cards)
+        !Array.isArray((parsed as { questions: unknown }).questions)
       ) {
-        throw new Error(
-          'Expected: { "name": "...", "cards": [{ "front": "...", "back": "..." }] }'
-        );
+        throw new Error('Expected: { "name": "...", "questions": [...] }');
       }
-      const { name, cards } = parsed as { name: string; cards: unknown[] };
-      const validated = cards.map((c, i) => {
-        if (typeof c !== 'object' || c === null || !('front' in c) || !('back' in c)) {
-          throw new Error(`Card ${i + 1}: "front" and "back" are required`);
+      const { name, questions } = parsed as { name: string; questions: unknown[] };
+      const validated = questions.map((q, i) => {
+        if (
+          typeof q !== 'object' || q === null ||
+          !('question' in q) || !('options' in q) || !('correct' in q) ||
+          typeof (q as { question: unknown }).question !== 'string' ||
+          !Array.isArray((q as { options: unknown }).options) ||
+          typeof (q as { correct: unknown }).correct !== 'number'
+        ) {
+          throw new Error(`Question ${i + 1}: needs "question" (string), "options" (array), "correct" (number)`);
+        }
+        const qObj = q as { question: string; options: unknown[]; correct: number };
+        if (qObj.options.length < 2) throw new Error(`Question ${i + 1}: at least 2 options required`);
+        if (qObj.correct < 0 || qObj.correct >= qObj.options.length) {
+          throw new Error(`Question ${i + 1}: "correct" must be a valid option index (0–${qObj.options.length - 1})`);
         }
         return {
-          front: String((c as { front: unknown }).front),
-          back: String((c as { back: unknown }).back),
+          question: qObj.question,
+          options: qObj.options.map((o) => String(o)),
+          correct: qObj.correct,
         };
       });
       onImport(name, validated, topicId || undefined);
@@ -57,44 +73,31 @@ export default function ImportScreen({ topics, initialTopicId, onImport, onBack 
   return (
     <div style={styles.wrapper}>
       <div style={styles.header}>
-        <button onClick={onBack} style={styles.backBtn}>
-          ← Back
-        </button>
-        <h2 style={styles.heading}>Create Deck</h2>
+        <button onClick={onBack} style={styles.backBtn}>← Back</button>
+        <h2 style={styles.heading}>Create Quiz</h2>
         <div style={{ width: 70 }} />
       </div>
 
       <div style={styles.content}>
         <p style={styles.hint}>
-          Paste JSON below. Ask an AI to generate decks in this format for you:
+          Paste quiz JSON below. Each question needs a <code style={styles.code}>question</code>, an <code style={styles.code}>options</code> array, and a <code style={styles.code}>correct</code> index (0-based).
         </p>
         <pre style={styles.example}>{EXAMPLE}</pre>
 
         {topics.length > 0 && (
           <div>
             <label style={styles.label}>Add to topic (optional)</label>
-            <select
-              value={topicId}
-              onChange={(e) => setTopicId(e.target.value)}
-              style={styles.select}
-            >
+            <select value={topicId} onChange={(e) => setTopicId(e.target.value)} style={styles.select}>
               <option value="">— No topic —</option>
-              {topics.map((t) => (
-                <option key={t.id} value={t.id}>
-                  {t.name}
-                </option>
-              ))}
+              {topics.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}
             </select>
           </div>
         )}
 
         <textarea
           value={json}
-          onChange={(e) => {
-            setJson(e.target.value);
-            setError('');
-          }}
-          placeholder='{ "name": "...", "cards": [...] }'
+          onChange={(e) => { setJson(e.target.value); setError(''); }}
+          placeholder='{ "name": "...", "questions": [...] }'
           rows={10}
           style={{ ...styles.textarea, borderColor: error ? C.again : C.border }}
         />
@@ -104,13 +107,9 @@ export default function ImportScreen({ topics, initialTopicId, onImport, onBack 
         <button
           onClick={handleImport}
           disabled={!json.trim()}
-          style={{
-            ...styles.importBtn,
-            opacity: json.trim() ? 1 : 0.4,
-            cursor: json.trim() ? 'pointer' : 'default',
-          }}
+          style={{ ...styles.importBtn, opacity: json.trim() ? 1 : 0.4, cursor: json.trim() ? 'pointer' : 'default' }}
         >
-          Create Deck
+          Create Quiz
         </button>
       </div>
     </div>
@@ -147,13 +146,8 @@ const styles: Record<string, React.CSSProperties> = {
     gap: 12,
   },
   hint: { color: C.mutedLight, fontSize: 13, lineHeight: 1.6 },
-  label: {
-    color: C.muted,
-    fontSize: 12,
-    letterSpacing: '0.04em',
-    display: 'block',
-    marginBottom: 6,
-  },
+  code: { fontFamily: 'monospace', fontSize: 12, color: C.accent },
+  label: { color: C.muted, fontSize: 12, letterSpacing: '0.04em', display: 'block', marginBottom: 6 },
   example: {
     background: C.surface,
     border: `1px solid ${C.border}`,

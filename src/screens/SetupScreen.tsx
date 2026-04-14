@@ -153,7 +153,7 @@ const styles: Record<string, React.CSSProperties> = {
   btn: {
     marginTop: 20,
     background: C.accent,
-    color: '#0d0d14',
+    color: '#fff',
     border: 'none',
     borderRadius: 12,
     padding: '14px',
@@ -161,6 +161,6 @@ const styles: Record<string, React.CSSProperties> = {
     fontWeight: 600,
     cursor: 'pointer',
     width: '100%',
-    boxShadow: `0 4px 20px rgba(232,160,48,0.3)`,
+    boxShadow: '0 4px 20px var(--accent-shadow)',
   },
 };

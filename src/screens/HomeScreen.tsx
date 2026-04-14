@@ -2,6 +2,32 @@ import { useState } from 'react';
 import type { FlashiData, Topic } from '../types';
 import { C } from '../theme';
 
+function TrashIcon() {
+  return (
+    <svg width="15" height="15" viewBox="0 0 15 15" fill="none" aria-hidden="true">
+      <path d="M1 4h13M5 4V2h5v2M2 4l1 9a2 2 0 002 2h5a2 2 0 002-2l1-9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+      <path d="M6 7v4M9 7v4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+    </svg>
+  );
+}
+
+function GearIcon() {
+  return (
+    <svg width="15" height="15" viewBox="0 0 15 15" fill="none" aria-hidden="true">
+      <path d="M7.5 9.5a2 2 0 100-4 2 2 0 000 4z" stroke="currentColor" strokeWidth="1.4"/>
+      <path d="M6.1 1.5l-.4 1.2a5 5 0 00-1.1.65L3.4 3l-1.4 2.4.9.9a5.1 5.1 0 000 1.4l-.9.9L3.4 11l1.2-.35a5 5 0 001.1.65l.4 1.2h2.8l.4-1.2a5 5 0 001.1-.65L11.6 11 13 8.6l-.9-.9a5.1 5.1 0 000-1.4l.9-.9L11.6 3l-1.2.35a5 5 0 00-1.1-.65L8.9 1.5H6.1z" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round"/>
+    </svg>
+  );
+}
+
+function ProgressionIcon() {
+  return (
+    <svg width="15" height="15" viewBox="0 0 15 15" fill="none" aria-hidden="true">
+      <path d="M1 12l3.5-4 3 2.5 3-5.5 3 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+    </svg>
+  );
+}
+
 interface Props {
   data: FlashiData;
   dueCount: (deckId: string) => number;
@@ -12,6 +38,8 @@ interface Props {
   onCreateTopic: (name: string) => void;
   onAssignTopic?: (deckId: string, topicId: string) => void;
   onAdmin?: () => void;
+  onSettings: () => void;
+  onProgression: () => void;
   onLogout: () => void;
 }
 
@@ -25,12 +53,16 @@ export default function HomeScreen({
   onCreateTopic,
   onAssignTopic,
   onAdmin,
+  onSettings,
+  onProgression,
   onLogout,
 }: Props) {
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
   const [assignTarget, setAssignTarget] = useState<string | null>(null);
   const [newTopicName, setNewTopicName] = useState('');
   const [showNewTopic, setShowNewTopic] = useState(false);
+  const [dragOverTopicId, setDragOverTopicId] = useState<string | null>(null);
+  const [draggingDeckId, setDraggingDeckId] = useState<string | null>(null);
 
   const totalDue = data.decks.reduce((s, d) => s + dueCount(d.id), 0);
   const totalCards = data.decks.reduce((s, d) => s + (data.cards[d.id]?.length ?? 0), 0);
@@ -84,6 +116,12 @@ export default function HomeScreen({
               👥 Users
             </button>
           )}
+          <button onClick={onProgression} style={{ ...styles.adminBtn, display: 'flex', alignItems: 'center', gap: 6 }}>
+            <ProgressionIcon /> Progression
+          </button>
+          <button onClick={onSettings} style={{ ...styles.adminBtn, display: 'flex', alignItems: 'center', gap: 6 }}>
+            <GearIcon /> Settings
+          </button>
           <button onClick={onLogout} style={styles.logoutBtn}>
             ↩ Logout
           </button>
@@ -114,6 +152,12 @@ export default function HomeScreen({
                 👥
               </button>
             )}
+            <button onClick={onProgression} style={styles.adminBtnMobile} title="Progression">
+              <ProgressionIcon />
+            </button>
+            <button onClick={onSettings} style={styles.adminBtnMobile} title="Settings">
+              <GearIcon />
+            </button>
             <button onClick={onLogout} style={styles.logoutBtnMobile}>
               ↩
             </button>
@@ -146,14 +190,40 @@ export default function HomeScreen({
                   const due = topicDue(t);
                   const cards = topicCards(t);
                   const deckCount = topicDeckCount(t);
+                  const topicPct = cards > 0 ? Math.round((1 - due / cards) * 100) : 100;
+                  const isDropTarget = dragOverTopicId === t.id;
                   return (
-                    <button key={t.id} onClick={() => onOpenTopic(t.id)} style={styles.topicCard}>
+                    <button
+                      key={t.id}
+                      onClick={() => onOpenTopic(t.id)}
+                      style={{
+                        ...styles.topicCard,
+                        border: isDropTarget ? `2px solid ${C.accent}` : `1px solid ${C.border}`,
+                        background: isDropTarget ? 'var(--easy-bg)' : C.surface,
+                      }}
+                      onDragOver={(e) => { e.preventDefault(); setDragOverTopicId(t.id); }}
+                      onDragLeave={() => setDragOverTopicId(null)}
+                      onDrop={(e) => {
+                        e.preventDefault();
+                        setDragOverTopicId(null);
+                        if (draggingDeckId && onAssignTopic) {
+                          onAssignTopic(draggingDeckId, t.id);
+                          setDraggingDeckId(null);
+                        }
+                      }}
+                    >
                       <div style={styles.topicEmoji}>📂</div>
                       <div style={styles.topicName}>{t.name}</div>
                       <div style={styles.topicMeta}>
                         {deckCount} deck{deckCount !== 1 ? 's' : ''} · {cards} cards
                       </div>
+                      {cards > 0 && (
+                        <div style={{ ...styles.topicPct, color: topicPct >= 80 ? C.good : topicPct >= 40 ? C.hard : C.muted }}>
+                          {topicPct}%
+                        </div>
+                      )}
                       {due > 0 && <div style={styles.topicDue}>{due} due</div>}
+                      {isDropTarget && <div style={styles.dropHint}>Drop here</div>}
                     </button>
                   );
                 })}
@@ -196,12 +266,19 @@ export default function HomeScreen({
                 )}
               </div>
 
+              <div style={styles.deckScrollList}>
               {unassignedDecks.map((deck) => {
                 const due = dueCount(deck.id);
                 const total = data.cards[deck.id]?.length ?? 0;
                 const allDone = due === 0;
                 return (
-                  <div key={deck.id} style={styles.deckCard}>
+                  <div
+                    key={deck.id}
+                    style={{ ...styles.deckCard, cursor: data.topics.length > 0 ? 'grab' : undefined }}
+                    draggable={data.topics.length > 0}
+                    onDragStart={() => setDraggingDeckId(deck.id)}
+                    onDragEnd={() => { setDraggingDeckId(null); setDragOverTopicId(null); }}
+                  >
                     <div style={styles.deckInfo}>
                       <div style={styles.deckName}>{deck.name}</div>
                       <div style={styles.deckMeta}>
@@ -213,6 +290,16 @@ export default function HomeScreen({
                           <span style={{ color: C.accent }}>{due} due</span>
                         )}
                       </div>
+                      {total > 0 && (
+                        <>
+                          <div style={styles.progressPctLabel}>
+                            {Math.round((1 - due / total) * 100)}% complete
+                          </div>
+                          <div style={styles.progressTrack}>
+                            <div style={{ ...styles.progressFill, width: `${Math.round((1 - due / total) * 100)}%` }} />
+                          </div>
+                        </>
+                      )}
                     </div>
                     {onAssignTopic && (
                       <button
@@ -229,7 +316,7 @@ export default function HomeScreen({
                       style={styles.deleteBtn}
                       aria-label="Delete"
                     >
-                      🗑
+                      <TrashIcon />
                     </button>
                     <button
                       onClick={() => onStudy(deck.id)}
@@ -238,9 +325,9 @@ export default function HomeScreen({
                         ...styles.studyBtn,
                         background: allDone ? 'transparent' : C.accent,
                         border: allDone ? `1px solid ${C.border}` : 'none',
-                        color: allDone ? C.muted : '#0d0d14',
+                        color: allDone ? C.muted : '#fff',
                         cursor: allDone ? 'default' : 'pointer',
-                        boxShadow: allDone ? 'none' : `0 2px 12px rgba(232,160,48,0.25)`,
+                        boxShadow: allDone ? 'none' : '0 2px 12px var(--accent-shadow-sm)',
                       }}
                     >
                       {allDone ? 'Done' : 'Study'}
@@ -248,6 +335,7 @@ export default function HomeScreen({
                   </div>
                 );
               })}
+              </div>
             </div>
           )}
         </div>
@@ -307,7 +395,7 @@ export default function HomeScreen({
         )}
 
         <button onClick={onImport} style={styles.fab}>
-          + Import deck
+          + Create deck
         </button>
       </div>
     </div>
@@ -434,13 +522,15 @@ const styles: Record<string, React.CSSProperties> = {
     textTransform: 'uppercase',
   },
   newTopicBtn: {
-    background: 'none',
-    border: `1px solid ${C.border}`,
+    background: C.accent,
+    border: 'none',
     borderRadius: 20,
-    color: C.mutedLight,
+    color: '#fff',
     cursor: 'pointer',
     fontSize: 12,
-    padding: '5px 12px',
+    fontWeight: 600,
+    padding: '6px 14px',
+    boxShadow: '0 2px 10px var(--accent-shadow-sm)',
   },
   topicCard: {
     background: C.surface,
@@ -467,11 +557,24 @@ const styles: Record<string, React.CSSProperties> = {
     width: '100%',
   },
   topicMeta: { color: C.muted, fontSize: 11 },
+  topicPct: {
+    fontSize: 16,
+    fontWeight: 700,
+    fontFamily: "'Playfair Display', serif",
+    marginTop: 2,
+  },
   topicDue: {
-    marginTop: 4,
+    marginTop: 2,
     color: C.accent,
     fontSize: 11,
     fontWeight: 600,
+  },
+  dropHint: {
+    marginTop: 6,
+    color: C.accent,
+    fontSize: 10,
+    fontWeight: 600,
+    letterSpacing: '0.04em',
   },
   newTopicForm: {
     display: 'flex',
@@ -492,11 +595,16 @@ const styles: Record<string, React.CSSProperties> = {
     background: C.accent,
     border: 'none',
     borderRadius: 12,
-    color: '#0d0d14',
+    color: '#fff',
     cursor: 'pointer',
     fontSize: 13,
     fontWeight: 600,
     padding: '10px 16px',
+  },
+  deckScrollList: {
+    maxHeight: '60vh',
+    overflowY: 'auto',
+    paddingRight: 2,
   },
   createTopicCancel: {
     background: 'none',
@@ -532,6 +640,26 @@ const styles: Record<string, React.CSSProperties> = {
     whiteSpace: 'nowrap',
   },
   deckMeta: { display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, color: C.muted },
+  progressPctLabel: {
+    color: C.muted,
+    fontSize: 10,
+    marginTop: 5,
+    letterSpacing: '0.02em',
+  },
+  progressTrack: {
+    height: 3,
+    background: C.border,
+    borderRadius: 2,
+    marginTop: 3,
+    overflow: 'hidden',
+  },
+  progressFill: {
+    height: '100%',
+    background: C.good,
+    borderRadius: 2,
+    transition: 'width 0.3s ease',
+    minWidth: 3,
+  },
   assignBtn: {
     background: 'none',
     border: 'none',
@@ -542,14 +670,17 @@ const styles: Record<string, React.CSSProperties> = {
     flexShrink: 0,
   },
   deleteBtn: {
-    background: 'none',
-    border: `1px solid ${C.again}44`,
+    background: C.again,
+    border: 'none',
     borderRadius: 8,
     cursor: 'pointer',
-    color: C.again,
-    padding: '5px 8px',
+    color: '#fff',
+    padding: '7px 9px',
     fontSize: 14,
     flexShrink: 0,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   studyBtn: {
     borderRadius: 11,
@@ -631,13 +762,13 @@ const styles: Record<string, React.CSSProperties> = {
     bottom: 28,
     right: 20,
     background: C.accent,
-    color: '#0d0d14',
+    color: '#fff',
     border: 'none',
     borderRadius: 16,
     padding: '14px 22px',
     fontSize: 14,
     fontWeight: 600,
     cursor: 'pointer',
-    boxShadow: '0 6px 28px rgba(232,160,48,0.3)',
+    boxShadow: '0 6px 28px var(--accent-shadow)',
   },
 };

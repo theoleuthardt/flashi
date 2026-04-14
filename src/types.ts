@@ -25,9 +25,34 @@ export interface FlashiData {
   topics: Topic[];
   decks: Deck[];
   cards: Record<string, Card[]>;
+  quizzes?: Quiz[];
+}
+
+export interface QuizQuestion {
+  question: string;
+  options: string[]; // 2–6 choices
+  correct: number;   // 0-based index of the correct option
+}
+
+export interface Quiz {
+  id: string;
+  name: string;
+  created: string;
+  topicId?: string;
+  questions: QuizQuestion[];
+}
+
+export interface QuizAnswer {
+  questionIndex: number;
+  selected: number; // -1 = not answered
+  correct: number;
 }
 
 export type Rating = 0 | 1 | 2 | 3; // again, hard, good, easy
 
-export type Screen = 'home' | 'topic' | 'study' | 'import' | 'done' | 'admin';
+export type Screen =
+  | 'home' | 'topic' | 'study' | 'import' | 'done'
+  | 'admin' | 'settings'
+  | 'quiz' | 'quiz-import' | 'quiz-results'
+  | 'progression';
 export type AppState = 'loading' | 'setup' | 'login' | 'app';

@@ -19,7 +19,11 @@ export default function LoginScreen({ onLogin }: Props) {
       const { token } = await login(password, username.trim() || undefined);
       onLogin(token);
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Error');
+      const msg = e instanceof Error ? e.message : 'Could not sign in';
+      if (msg === 'User not found') setError('No account found with that username');
+      else if (msg === 'Incorrect password') setError('Wrong password — please try again');
+      else if (msg.includes('expired')) setError('Your session has expired — please sign in again');
+      else setError(msg);
     } finally {
       setLoading(false);
     }
@@ -37,7 +41,7 @@ export default function LoginScreen({ onLogin }: Props) {
           type="text"
           value={username}
           onChange={(e) => setUsername(e.target.value)}
-          placeholder="Leave blank for default"
+          placeholder="Username"
           style={styles.input}
           autoComplete="username"
           autoFocus
@@ -134,7 +138,7 @@ const styles: Record<string, React.CSSProperties> = {
   btn: {
     marginTop: 16,
     background: C.accent,
-    color: '#0d0d14',
+    color: '#fff',
     border: 'none',
     borderRadius: 12,
     padding: '14px',
@@ -142,6 +146,6 @@ const styles: Record<string, React.CSSProperties> = {
     fontWeight: 600,
     cursor: 'pointer',
     width: '100%',
-    boxShadow: `0 4px 20px rgba(232,160,48,0.3)`,
+    boxShadow: '0 4px 20px var(--accent-shadow)',
   },
 };

@@ -7,10 +7,16 @@ A self-hosted, mobile-first flashcard app powered by the SM-2 spaced repetition 
 - **Spaced repetition** — SM-2 algorithm with Again / Hard / Good / Easy ratings
 - **3D card flip** — smooth CSS perspective animation on every card
 - **Skip cards** — skip to the next card with a slide animation, no rating needed
-- **Topics & folders** — organise decks into topic folders with a grid layout
-- **Dashboard** — live stats (decks, cards, due today) in a sidebar on desktop and a top bar on mobile
-- **Multi-user** — admin can create and remove additional user accounts
-- **Auth** — bcrypt password hashing, JWT sessions (30 days)
+- **Topics & folders** — organise decks into topic folders with a grid layout; drag uncategorised decks onto topic cards to assign them
+- **Dashboard** — live stats (decks, cards, due today) in a sidebar on desktop and a top bar on mobile; progress bars on every deck card
+- **Daily Mix** — one button in any topic starts a randomised study session of up to 20 cards from all the topic's decks
+- **Fault repeat** — cards marked "Again" are tracked per topic; a **Repeat faults** button appears after each study session
+- **Read-aloud** — tap the speaker icon on any card to hear it read with the browser's built-in Speech Synthesis API (great for language learning)
+- **Discord reminders** — configure a webhook URL and a daily time in Settings to get a message when cards are due (see below)
+- **Quizzes** — import multiple-choice quizzes (JSON) per topic; A/B/C/D options with reveal-on-select, score screen with fault review
+- **Progression** — overview screen with overall % learned and per-topic stacked bars (learned / due / new)
+- **Multi-user** — admin can create and remove additional user accounts; per-user data stored on the server volume
+- **Auth** — bcrypt password hashing, JWT sessions (30 days); users can change their own password in Settings
 - **PWA** — installable on iPhone, Android, and desktop via the browser
 
 ---
@@ -71,13 +77,62 @@ Ask an AI to generate flashcard decks in the following JSON format:
 }
 ```
 
-In the app: **+ Import deck** → paste JSON → optionally assign to a topic → **Import**.
+In the app: **+ Create deck** → paste JSON → optionally assign to a topic → **Create Deck**.
+
+---
+
+## Importing Quizzes
+
+Ask an AI to generate quizzes in the following JSON format:
+
+```json
+{
+  "name": "Lesson 1 – Cyrillic Alphabet Quiz",
+  "questions": [
+    {
+      "question": "What sound does 'А а' make?",
+      "options": ["A (as in father)", "B (as in book)", "V (as in victory)", "G (as in go)"],
+      "correct": 0
+    }
+  ]
+}
+```
+
+`correct` is the zero-based index of the right answer.
+
+In the app: **+ Create quiz** (inside a topic) → paste JSON → **Create Quiz**.
+
+---
+
+## Discord Daily Reminders
+
+Flashi can send you a Discord message every day when you have cards due.
+
+### Setup
+
+1. In Discord, open **Server Settings → Integrations → Webhooks** and create a new webhook. Copy the webhook URL.
+2. In the Flashi app, tap **⚙ Settings** (sidebar on desktop, top-right on mobile).
+3. Paste the webhook URL into **Discord webhook URL**.
+4. Set your preferred **Notification time** (uses the server's local time zone).
+5. Toggle **Enable daily reminder** on and click **Save notification settings**.
+
+### What it sends
+
+When you have cards due the server sends:
+
+```
+📚 **Reminder**: You have **12** cards due today, alice! Time to study.
+```
+
+No message is sent on days when you have zero cards due.
+
+> **Note:** Notifications run on the server, not the browser, so they fire even when you have the app closed — as long as the container is running.
 
 ---
 
 ## User Management
 
-Log in as admin → click the **⚙ Users** button to open the admin panel.  
+Log in as admin → click the **👥 Users** button to open the admin panel.  
 From there you can add or remove user accounts.
 
 ---
@@ -97,7 +152,9 @@ From there you can add or remove user accounts.
 flashi/
 ├── src/
 │   ├── screens/        # LoginScreen, SetupScreen, HomeScreen, TopicScreen,
-│   │                   # StudyScreen, ImportScreen, DoneScreen, AdminScreen
+│   │                   # StudyScreen, ImportScreen, DoneScreen, AdminScreen,
+│   │                   # SettingsScreen, QuizImportScreen, QuizScreen,
+│   │                   # QuizResultsScreen, ProgressionScreen
 │   ├── utils/          # SRS algorithm, localStorage, API client
 │   ├── App.tsx         # Routing & global state
 │   ├── theme.ts        # Design tokens
@@ -119,7 +176,7 @@ flashi/
 | Frontend | React 18 + TypeScript + Vite 8 |
 | Styling | Inline styles + CSS animations |
 | Backend | Express + bcryptjs + jsonwebtoken |
-| Storage | localStorage (client) · JSON file (server config) |
+| Storage | JSON files per user (server volume) · localStorage cache (client) |
 | Containerisation | Docker + Docker Compose |
 
 ---
