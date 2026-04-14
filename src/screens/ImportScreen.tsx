@@ -4,6 +4,7 @@ import { C } from '../theme';
 
 interface Props {
   topics: Topic[];
+  initialTopicId?: string;
   onImport: (name: string, cards: Array<{ front: string; back: string }>, topicId?: string) => void;
   onBack: () => void;
 }
@@ -16,10 +17,10 @@ const EXAMPLE = `{
   ]
 }`;
 
-export default function ImportScreen({ topics, onImport, onBack }: Props) {
+export default function ImportScreen({ topics, initialTopicId, onImport, onBack }: Props) {
   const [json, setJson] = useState('');
   const [error, setError] = useState('');
-  const [topicId, setTopicId] = useState('');
+  const [topicId, setTopicId] = useState(initialTopicId ?? '');
 
   function handleImport() {
     setError('');
@@ -59,7 +60,7 @@ export default function ImportScreen({ topics, onImport, onBack }: Props) {
         <button onClick={onBack} style={styles.backBtn}>
           ← Back
         </button>
-        <h2 style={styles.heading}>Import Deck</h2>
+        <h2 style={styles.heading}>Create Deck</h2>
         <div style={{ width: 70 }} />
       </div>
 
@@ -109,7 +110,7 @@ export default function ImportScreen({ topics, onImport, onBack }: Props) {
             cursor: json.trim() ? 'pointer' : 'default',
           }}
         >
-          Import
+          Create Deck
         </button>
       </div>
     </div>
@@ -190,13 +191,13 @@ const styles: Record<string, React.CSSProperties> = {
   error: { color: C.again, fontSize: 13 },
   importBtn: {
     background: C.accent,
-    color: '#0d0d14',
+    color: '#fff',
     border: 'none',
     borderRadius: 12,
     padding: '14px',
     fontSize: 15,
     fontWeight: 600,
     width: '100%',
-    boxShadow: '0 4px 20px rgba(232,160,48,0.3)',
+    boxShadow: '0 4px 20px var(--accent-shadow)',
   },
 };
