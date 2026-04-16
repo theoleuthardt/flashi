@@ -87,7 +87,7 @@ git clone https://github.com/theoleuthardt/flashi.git && cd flashi
 docker compose -f docker-compose.build.yml up -d --build
 ```
 
-The app runs on `http://your-server:4500` (Podman) or `http://your-server:3001` (Docker).
+The app runs on `http://your-server:3001`.
 
 ### 4. First-time setup
 
@@ -171,7 +171,7 @@ From there you can add or remove user accounts.
 
 ## PWA Installation (iPhone)
 
-1. Open Safari → `http://your-server:4500` (Podman) or `http://your-server:3001` (Docker)
+1. Open Safari → `http://your-server:3001`
 2. Tap the Share button → **Add to Home Screen**
 3. Done — Flashi runs as a native-looking app
 

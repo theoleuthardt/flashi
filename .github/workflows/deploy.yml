@@ -58,5 +58,4 @@ jobs:
             podman-compose -f podman-compose.yml pull
             podman stop --time 0 flashi || true
             podman rm flashi 2>/dev/null || true
-            podman network rm flashi_default || true
             podman-compose -f podman-compose.yml up -d
