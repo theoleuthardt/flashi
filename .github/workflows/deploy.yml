@@ -56,5 +56,6 @@ jobs:
             set -e
             cd ${{ secrets.DEPLOY_PATH }}
             podman-compose -f podman-compose.yml pull
-            podman-compose -f podman-compose.yml down
+            podman stop --time 0 flashi || true
+            podman rm flashi 2>/dev/null || true
             podman-compose -f podman-compose.yml up -d

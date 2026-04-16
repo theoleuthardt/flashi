@@ -3,8 +3,7 @@ services:
     image: ghcr.io/theoleuthardt/flashi:stable
     container_name: flashi
     restart: unless-stopped
-    ports:
-      - "4500:3001"
+    network_mode: host
     volumes:
       - flashi-data:/data
     environment:
