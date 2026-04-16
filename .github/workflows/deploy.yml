@@ -56,4 +56,5 @@ jobs:
             set -e
             cd ${{ secrets.DEPLOY_PATH }}
             podman-compose -f podman-compose.yml pull
-            podman-compose -f podman-compose.yml up -d --force-recreate
+            podman-compose -f podman-compose.yml down
+            podman-compose -f podman-compose.yml up -d
