@@ -28,10 +28,13 @@ export interface FlashiData {
   quizzes?: Quiz[];
 }
 
+// Each option is either a plain string or a [text, explanation] pair
+export type QuizOption = string | [string, string];
+
 export interface QuizQuestion {
   question: string;
-  options: string[]; // 2–6 choices
-  correct: number;   // 0-based index of the correct option
+  options: QuizOption[]; // 2–6 choices
+  correct: number;       // 0-based index of the correct option
 }
 
 export interface Quiz {
