@@ -97,7 +97,11 @@ export default function App() {
   function mutate(next: FlashiData) {
     setData(next);
     saveData(next);
-    void saveUserData(next);
+    saveUserData(next).catch((err: unknown) => {
+      const msg = err instanceof Error ? err.message : 'Unknown error';
+      console.error('[flashi] server save failed:', msg);
+      alert(`⚠️ Failed to save data: ${msg}\n\nPlease reload the page and try again.`);
+    });
   }
 
   async function handleAuth(token: string) {
