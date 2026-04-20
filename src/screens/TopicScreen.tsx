@@ -23,6 +23,7 @@ interface Props {
   onStartQuiz: (quizId: string) => void;
   onDeleteQuiz: (quizId: string) => void;
   onDailyMix: () => void;
+  onDailyQuizMix: () => void;
   faultCount: number;
   onRepeatFaults: () => void;
   onBack: () => void;
@@ -40,6 +41,7 @@ export default function TopicScreen({
   onStartQuiz,
   onDeleteQuiz,
   onDailyMix,
+  onDailyQuizMix,
   faultCount,
   onRepeatFaults,
   onBack,
@@ -223,6 +225,11 @@ export default function TopicScreen({
           {faultCount > 0 && (
             <button onClick={onRepeatFaults} style={styles.fabFaults}>
               ↩ Repeat {faultCount} fault{faultCount !== 1 ? 's' : ''}
+            </button>
+          )}
+          {quizzes.length > 0 && (
+            <button onClick={onDailyQuizMix} style={styles.fabMix}>
+              🎯 Daily quiz mix
             </button>
           )}
           <button onClick={onDailyMix} style={styles.fabMix}>
