@@ -2,10 +2,16 @@ import { useState } from 'react';
 import type { Topic, QuizOption } from '../types';
 import { C } from '../theme';
 
+interface QuizDraft {
+  name: string;
+  questions: Array<{ question: string; options: QuizOption[]; correct: number }>;
+  topicId?: string;
+}
+
 interface Props {
   topics: Topic[];
   initialTopicId?: string;
-  onImport: (name: string, questions: Array<{ question: string; options: QuizOption[]; correct: number }>, topicId?: string) => void;
+  onImport: (quizzes: QuizDraft[]) => void;
   onBack: () => void;
 }
 
@@ -78,14 +84,16 @@ export default function QuizImportScreen({ topics, initialTopicId, onImport, onB
     setError('');
     try {
       const parsed = JSON.parse(json) as unknown;
+      const tid = topicId || undefined;
       if (Array.isArray(parsed)) {
-        parsed.forEach((item, i) => {
+        const quizzes = parsed.map((item, i) => {
           const { name, questions } = parseQuiz(item, `Quiz ${i + 1}`);
-          onImport(name, questions, topicId || undefined);
+          return { name, questions, topicId: tid };
         });
+        onImport(quizzes);
       } else {
         const { name, questions } = parseQuiz(parsed, 'Quiz');
-        onImport(name, questions, topicId || undefined);
+        onImport([{ name, questions, topicId: tid }]);
       }
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Invalid JSON');
