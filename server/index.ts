@@ -74,7 +74,7 @@ function signToken(payload: JwtPayload): string {
 }
 
 const app = express();
-app.use(express.json());
+app.use(express.json({ limit: '10mb' }));
 app.use(cors({ origin: true, credentials: true }));
 
 function requireAuth(req: Request, res: Response, next: NextFunction): void {
