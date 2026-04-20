@@ -2,10 +2,16 @@ import { useState } from 'react';
 import type { Topic } from '../types';
 import { C } from '../theme';
 
+interface DeckDraft {
+  name: string;
+  cards: Array<{ front: string; back: string }>;
+  topicId?: string;
+}
+
 interface Props {
   topics: Topic[];
   initialTopicId?: string;
-  onImport: (name: string, cards: Array<{ front: string; back: string }>, topicId?: string) => void;
+  onImport: (decks: DeckDraft[]) => void;
   onBack: () => void;
 }
 
@@ -55,14 +61,16 @@ export default function ImportScreen({ topics, initialTopicId, onImport, onBack 
     setError('');
     try {
       const parsed = JSON.parse(json) as unknown;
+      const tid = topicId || undefined;
       if (Array.isArray(parsed)) {
-        parsed.forEach((item, i) => {
+        const decks = parsed.map((item, i) => {
           const { name, cards } = parseDeck(item, `Deck ${i + 1}`);
-          onImport(name, cards, topicId || undefined);
+          return { name, cards, topicId: tid };
         });
+        onImport(decks);
       } else {
         const { name, cards } = parseDeck(parsed, 'Deck');
-        onImport(name, cards, topicId || undefined);
+        onImport([{ name, cards, topicId: tid }]);
       }
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Invalid JSON');

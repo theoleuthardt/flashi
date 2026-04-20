@@ -33,6 +33,7 @@ export default function App() {
   const [topicFaults, setTopicFaults] = useState<Record<string, Set<string>>>({});
   const [activeQuizId, setActiveQuizId] = useState<string | null>(null);
   const [quizAnswers, setQuizAnswers] = useState<QuizAnswer[]>([]);
+  const [mixQuiz, setMixQuiz] = useState<Quiz | null>(null);
   const [theme, setTheme] = useState<'dark' | 'light'>(() => {
     return (localStorage.getItem('flashi-theme') as 'dark' | 'light') ?? 'dark';
   });
@@ -53,13 +54,17 @@ export default function App() {
   async function loadAndSetData() {
     try {
       const serverData = await loadUserData();
-      // One-time migration: if server has no data but localStorage does, migrate it
       const localData = loadData();
-      if (
+      // One-time migration: only when server is completely empty but local has data
+      const serverEmpty =
         serverData.decks.length === 0 &&
         serverData.topics.length === 0 &&
-        (localData.decks.length > 0 || localData.topics.length > 0)
-      ) {
+        (serverData.quizzes ?? []).length === 0;
+      const localHasData =
+        localData.decks.length > 0 ||
+        localData.topics.length > 0 ||
+        (localData.quizzes ?? []).length > 0;
+      if (serverEmpty && localHasData) {
         setData(localData);
         void saveUserData(localData);
       } else {
@@ -140,6 +145,25 @@ export default function App() {
     startMultiDeckStudy(shuffled);
   }
 
+  function startDailyQuizMix(topicId: string) {
+    const topicQuizzes = (data.quizzes ?? []).filter((q) => q.topicId === topicId);
+    if (!topicQuizzes.length) return;
+    const allQuestions = topicQuizzes.flatMap((q) => q.questions);
+    const shuffled = [...allQuestions].sort(() => Math.random() - 0.5).slice(0, 20);
+    if (!shuffled.length) return;
+    const quiz: Quiz = {
+      id: '__quiz-mix__',
+      name: 'Daily Quiz Mix',
+      created: todayStr(),
+      topicId,
+      questions: shuffled,
+    };
+    setMixQuiz(quiz);
+    setActiveQuizId(quiz.id);
+    setQuizAnswers([]);
+    setScreen('quiz');
+  }
+
   function repeatTopicFaults(topicId: string) {
     const faultIds = topicFaults[topicId];
     if (!faultIds?.size) return;
@@ -204,18 +228,18 @@ export default function App() {
     }
   }
 
-  function importDeck(
-    name: string,
-    cards: Array<{ front: string; back: string }>,
-    topicId?: string
-  ) {
-    const deckId = Math.random().toString(36).slice(2);
-    const deck: Deck = { id: deckId, name, created: todayStr(), topicId };
-    mutate({
-      ...data,
-      decks: [...data.decks, deck],
-      cards: { ...data.cards, [deckId]: cards.map((c) => newCard(c.front, c.back)) },
-    });
+  function importDecks(drafts: Array<{ name: string; cards: Array<{ front: string; back: string }>; topicId?: string }>) {
+    let next = data;
+    for (const { name, cards, topicId } of drafts) {
+      const deckId = Math.random().toString(36).slice(2);
+      const deck: Deck = { id: deckId, name, created: todayStr(), topicId };
+      next = {
+        ...next,
+        decks: [...next.decks, deck],
+        cards: { ...next.cards, [deckId]: cards.map((c) => newCard(c.front, c.back)) },
+      };
+    }
+    mutate(next);
   }
 
   function deleteDeck(deckId: string) {
@@ -236,9 +260,15 @@ export default function App() {
     mutate({ ...data, topics: [...data.topics, topic] });
   }
 
-  function importQuiz(name: string, questions: QuizQuestion[], topicId?: string) {
-    const quiz: Quiz = { id: Math.random().toString(36).slice(2), name, created: todayStr(), topicId, questions };
-    mutate({ ...data, quizzes: [...(data.quizzes ?? []), quiz] });
+  function importQuizzes(drafts: Array<{ name: string; questions: QuizQuestion[]; topicId?: string }>) {
+    const newQuizzes: Quiz[] = drafts.map(({ name, questions, topicId }) => ({
+      id: Math.random().toString(36).slice(2),
+      name,
+      created: todayStr(),
+      topicId,
+      questions,
+    }));
+    mutate({ ...data, quizzes: [...(data.quizzes ?? []), ...newQuizzes] });
   }
 
   function deleteQuiz(quizId: string) {
@@ -339,8 +369,8 @@ export default function App() {
         <ImportScreen
           topics={data.topics}
           initialTopicId={activeTopicId ?? undefined}
-          onImport={(name, cards, topicId) => {
-            importDeck(name, cards, topicId);
+          onImport={(decks) => {
+            importDecks(decks);
             setScreen(activeTopicId ? 'topic' : 'home');
           }}
           onBack={() => setScreen(activeTopicId ? 'topic' : 'home')}
@@ -384,8 +414,8 @@ export default function App() {
         <QuizImportScreen
           topics={data.topics}
           initialTopicId={activeTopicId ?? undefined}
-          onImport={(name, questions, topicId) => {
-            importQuiz(name, questions, topicId);
+          onImport={(quizzes) => {
+            importQuizzes(quizzes);
             setScreen(activeTopicId ? 'topic' : 'home');
           }}
           onBack={() => setScreen(activeTopicId ? 'topic' : 'home')}
@@ -395,14 +425,14 @@ export default function App() {
     );
 
   if (screen === 'quiz' && activeQuizId) {
-    const quiz = (data.quizzes ?? []).find((q) => q.id === activeQuizId);
+    const quiz = mixQuiz ?? (data.quizzes ?? []).find((q) => q.id === activeQuizId);
     if (!quiz) { setScreen('topic'); return null; }
     return (
       <>
         <QuizScreen
           quiz={quiz}
           onDone={(answers) => { setQuizAnswers(answers); setScreen('quiz-results'); }}
-          onBack={() => setScreen(activeTopicId ? 'topic' : 'home')}
+          onBack={() => { setMixQuiz(null); setScreen(activeTopicId ? 'topic' : 'home'); }}
         />
         {themeToggle}
       </>
@@ -410,14 +440,14 @@ export default function App() {
   }
 
   if (screen === 'quiz-results' && activeQuizId) {
-    const quiz = (data.quizzes ?? []).find((q) => q.id === activeQuizId);
+    const quiz = mixQuiz ?? (data.quizzes ?? []).find((q) => q.id === activeQuizId);
     if (!quiz) { setScreen('topic'); return null; }
     return (
       <>
         <QuizResultsScreen
           quiz={quiz}
           answers={quizAnswers}
-          onBack={() => setScreen(activeTopicId ? 'topic' : 'home')}
+          onBack={() => { setMixQuiz(null); setScreen(activeTopicId ? 'topic' : 'home'); }}
           onRetry={() => { setQuizAnswers([]); setScreen('quiz'); }}
         />
         {themeToggle}
@@ -451,6 +481,7 @@ export default function App() {
           onStartQuiz={(quizId) => { setActiveQuizId(quizId); setQuizAnswers([]); setScreen('quiz'); }}
           onDeleteQuiz={deleteQuiz}
           onDailyMix={() => startDailyMix(activeTopicId)}
+          onDailyQuizMix={() => startDailyQuizMix(activeTopicId)}
           faultCount={faultCount}
           onRepeatFaults={() => repeatTopicFaults(activeTopicId)}
           onBack={() => setScreen('home')}
