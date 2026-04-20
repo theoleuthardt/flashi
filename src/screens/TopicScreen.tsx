@@ -103,6 +103,9 @@ export default function TopicScreen({
         </div>
 
         <div style={styles.list}>
+          <div className="topic-lists-grid">
+          <div style={styles.listsColumn}>
+          <p style={styles.deckSectionTitle}>Flashcards</p>
           {decks.length === 0 && (
             <div style={styles.empty}>
               <div style={styles.emptyIcon}>📂</div>
@@ -113,7 +116,6 @@ export default function TopicScreen({
             </div>
           )}
 
-          <div style={styles.deckScrollList}>
           {decks.map((deck) => {
             const due = dueCount(deck.id);
             const total = data.cards[deck.id]?.length ?? 0;
@@ -169,8 +171,9 @@ export default function TopicScreen({
           })}
           </div>
 
+          <div style={styles.listsColumn}>
           {quizzes.length > 0 && (
-            <div style={{ marginTop: 24 }}>
+            <div>
               <p style={styles.quizSectionTitle}>Quizzes</p>
               {quizzes.map((quiz) => (
                 <div key={quiz.id} style={styles.quizCard}>
@@ -192,6 +195,8 @@ export default function TopicScreen({
               ))}
             </div>
           )}
+          </div>
+          </div>
         </div>
 
         {deleteQuizConfirm && (
@@ -376,7 +381,8 @@ const styles: Record<string, React.CSSProperties> = {
     alignItems: 'center',
     justifyContent: 'center',
   },
-  list: { padding: '20px 16px 120px', maxWidth: 560, width: '100%', margin: '0 auto' },
+  list: { padding: '20px 16px 200px', maxWidth: 1080, width: '100%', margin: '0 auto' },
+  listsColumn: { flex: 1, minWidth: 0 },
   empty: { textAlign: 'center', padding: '64px 24px', color: C.muted },
   emptyIcon: { fontSize: 52, marginBottom: 16, opacity: 0.5 },
   emptyTitle: { fontSize: 16, color: C.mutedLight, marginBottom: 8 },
@@ -435,10 +441,13 @@ const styles: Record<string, React.CSSProperties> = {
     alignItems: 'center',
     justifyContent: 'center',
   },
-  deckScrollList: {
-    maxHeight: '55vh',
-    overflowY: 'auto',
-    paddingRight: 2,
+  deckSectionTitle: {
+    color: C.muted,
+    fontSize: 11,
+    fontWeight: 600,
+    letterSpacing: '0.08em',
+    textTransform: 'uppercase' as const,
+    marginBottom: 10,
   },
   fabGroup: {
     position: 'fixed',

@@ -3,15 +3,15 @@
 /* ── Theme tokens ──────────────────────────────────────────── */
 :root {
   /* Dark – black & blue */
-  --bg:            #04040e;
-  --surface:       #0a0a1c;
-  --surface2:      #10102a;
-  --border:        #1c1c3a;
+  --bg:            #05051a;
+  --surface:       #0d0d24;
+  --surface2:      #161636;
+  --border:        #303060;
   --accent:        #5585ff;
   --accent-dim:    #3a62d4;
   --text:          #eaeaf8;
-  --muted:         #52527a;
-  --muted-light:   #8282b8;
+  --muted:         #7878b8;
+  --muted-light:   #acace0;
   --again:         #e05252;
   --hard:          #d08030;
   --good:          #38b864;
@@ -198,6 +198,20 @@ button:active {
 @media (min-width: 768px) {
   .mobile-only {
     display: none !important;
+  }
+}
+
+/* ── Topic lists (decks + quizzes side by side on tablet) ─── */
+.topic-lists-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+@media (min-width: 768px) {
+  .topic-lists-grid {
+    flex-direction: row;
+    align-items: flex-start;
+    gap: 32px;
   }
 }
 

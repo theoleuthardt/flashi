@@ -1,11 +1,11 @@
 import { useState } from 'react';
-import type { Topic } from '../types';
+import type { Topic, QuizOption } from '../types';
 import { C } from '../theme';
 
 interface Props {
   topics: Topic[];
   initialTopicId?: string;
-  onImport: (name: string, questions: Array<{ question: string; options: string[]; correct: number }>, topicId?: string) => void;
+  onImport: (name: string, questions: Array<{ question: string; options: QuizOption[]; correct: number }>, topicId?: string) => void;
   onBack: () => void;
 }
 
@@ -14,7 +14,12 @@ const EXAMPLE = `{
   "questions": [
     {
       "question": "What is the capital of Russia?",
-      "options": ["Kyiv", "Moscow", "Minsk", "Warsaw"],
+      "options": [
+        ["Kyiv",   "Falsch – Kyiv ist die Hauptstadt der Ukraine."],
+        ["Moscow", "Richtig! Moskau ist seit 1918 Russlands Hauptstadt."],
+        ["Minsk",  "Falsch – Minsk ist die Hauptstadt von Belarus."],
+        ["Warsaw", "Falsch – Warschau ist die Hauptstadt Polens."]
+      ],
       "correct": 1
     },
     {
@@ -30,44 +35,69 @@ export default function QuizImportScreen({ topics, initialTopicId, onImport, onB
   const [error, setError] = useState('');
   const [topicId, setTopicId] = useState(initialTopicId ?? '');
 
+  function parseQuiz(obj: unknown, label: string) {
+    if (
+      typeof obj !== 'object' || obj === null ||
+      !('name' in obj) || !('questions' in obj) ||
+      typeof (obj as { name: unknown }).name !== 'string' ||
+      !Array.isArray((obj as { questions: unknown }).questions)
+    ) {
+      throw new Error(`${label}: Expected { "name": "...", "questions": [...] }`);
+    }
+    const { name, questions } = obj as { name: string; questions: unknown[] };
+    const validated = questions.map((q, i) => {
+      if (
+        typeof q !== 'object' || q === null ||
+        !('question' in q) || !('options' in q) || !('correct' in q) ||
+        typeof (q as { question: unknown }).question !== 'string' ||
+        !Array.isArray((q as { options: unknown }).options) ||
+        typeof (q as { correct: unknown }).correct !== 'number'
+      ) {
+        throw new Error(`${label}, question ${i + 1}: needs "question" (string), "options" (array), "correct" (number)`);
+      }
+      const qObj = q as { question: string; options: unknown[]; correct: number };
+      if (qObj.options.length < 2) throw new Error(`${label}, question ${i + 1}: at least 2 options required`);
+      if (qObj.correct < 0 || qObj.correct >= qObj.options.length) {
+        throw new Error(`${label}, question ${i + 1}: "correct" must be a valid index (0–${qObj.options.length - 1})`);
+      }
+      const options: QuizOption[] = qObj.options.map((o, oi) => {
+        if (Array.isArray(o)) {
+          if (o.length < 1) throw new Error(`${label}, question ${i + 1}, option ${oi + 1}: tuple must have at least one element`);
+          return o.length >= 2
+            ? [String(o[0]), String(o[1])] as [string, string]
+            : String(o[0]);
+        }
+        return String(o);
+      });
+      return { question: qObj.question, options, correct: qObj.correct };
+    });
+    return { name, questions: validated };
+  }
+
   function handleImport() {
     setError('');
     try {
       const parsed = JSON.parse(json) as unknown;
-      if (
-        typeof parsed !== 'object' || parsed === null ||
-        !('name' in parsed) || !('questions' in parsed) ||
-        typeof (parsed as { name: unknown }).name !== 'string' ||
-        !Array.isArray((parsed as { questions: unknown }).questions)
-      ) {
-        throw new Error('Expected: { "name": "...", "questions": [...] }');
+      if (Array.isArray(parsed)) {
+        parsed.forEach((item, i) => {
+          const { name, questions } = parseQuiz(item, `Quiz ${i + 1}`);
+          onImport(name, questions, topicId || undefined);
+        });
+      } else {
+        const { name, questions } = parseQuiz(parsed, 'Quiz');
+        onImport(name, questions, topicId || undefined);
       }
-      const { name, questions } = parsed as { name: string; questions: unknown[] };
-      const validated = questions.map((q, i) => {
-        if (
-          typeof q !== 'object' || q === null ||
-          !('question' in q) || !('options' in q) || !('correct' in q) ||
-          typeof (q as { question: unknown }).question !== 'string' ||
-          !Array.isArray((q as { options: unknown }).options) ||
-          typeof (q as { correct: unknown }).correct !== 'number'
-        ) {
-          throw new Error(`Question ${i + 1}: needs "question" (string), "options" (array), "correct" (number)`);
-        }
-        const qObj = q as { question: string; options: unknown[]; correct: number };
-        if (qObj.options.length < 2) throw new Error(`Question ${i + 1}: at least 2 options required`);
-        if (qObj.correct < 0 || qObj.correct >= qObj.options.length) {
-          throw new Error(`Question ${i + 1}: "correct" must be a valid option index (0–${qObj.options.length - 1})`);
-        }
-        return {
-          question: qObj.question,
-          options: qObj.options.map((o) => String(o)),
-          correct: qObj.correct,
-        };
-      });
-      onImport(name, validated, topicId || undefined);
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Invalid JSON');
     }
+  }
+
+  function quizCount() {
+    try {
+      const parsed = JSON.parse(json) as unknown;
+      if (Array.isArray(parsed)) return parsed.length;
+    } catch { /* ignore */ }
+    return 1;
   }
 
   return (
@@ -80,7 +110,7 @@ export default function QuizImportScreen({ topics, initialTopicId, onImport, onB
 
       <div style={styles.content}>
         <p style={styles.hint}>
-          Paste quiz JSON below. Each question needs a <code style={styles.code}>question</code>, an <code style={styles.code}>options</code> array, and a <code style={styles.code}>correct</code> index (0-based).
+          Paste a single quiz or an array of quizzes. Each option can be a plain string <code style={styles.code}>"text"</code> or a pair <code style={styles.code}>["text", "explanation"]</code>.
         </p>
         <pre style={styles.example}>{EXAMPLE}</pre>
 
@@ -97,7 +127,7 @@ export default function QuizImportScreen({ topics, initialTopicId, onImport, onB
         <textarea
           value={json}
           onChange={(e) => { setJson(e.target.value); setError(''); }}
-          placeholder='{ "name": "...", "questions": [...] }'
+          placeholder='{ "name": "...", "questions": [...] }  or  [{ ... }, { ... }]'
           rows={10}
           style={{ ...styles.textarea, borderColor: error ? C.again : C.border }}
         />
@@ -109,7 +139,7 @@ export default function QuizImportScreen({ topics, initialTopicId, onImport, onB
           disabled={!json.trim()}
           style={{ ...styles.importBtn, opacity: json.trim() ? 1 : 0.4, cursor: json.trim() ? 'pointer' : 'default' }}
         >
-          Create Quiz
+          {json.trim() && quizCount() > 1 ? `Import ${quizCount()} Quizzes` : 'Create Quiz'}
         </button>
       </div>
     </div>

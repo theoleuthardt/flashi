@@ -9,49 +9,72 @@ interface Props {
   onBack: () => void;
 }
 
-const EXAMPLE = `{
+const EXAMPLE = `// Single deck
+{
   "name": "Lesson 1 – Cyrillic Alphabet",
   "cards": [
     { "front": "А а", "back": "A (as in father)" },
     { "front": "Б б", "back": "B (as in book)" }
   ]
-}`;
+}
+
+// Or multiple decks at once
+[
+  { "name": "Deck 1", "cards": [{ "front": "...", "back": "..." }] },
+  { "name": "Deck 2", "cards": [{ "front": "...", "back": "..." }] }
+]`;
 
 export default function ImportScreen({ topics, initialTopicId, onImport, onBack }: Props) {
   const [json, setJson] = useState('');
   const [error, setError] = useState('');
   const [topicId, setTopicId] = useState(initialTopicId ?? '');
 
+  function parseDeck(obj: unknown, label: string) {
+    if (
+      typeof obj !== 'object' || obj === null ||
+      !('name' in obj) || !('cards' in obj) ||
+      typeof (obj as { name: unknown }).name !== 'string' ||
+      !Array.isArray((obj as { cards: unknown }).cards)
+    ) {
+      throw new Error(`${label}: Expected { "name": "...", "cards": [...] }`);
+    }
+    const { name, cards } = obj as { name: string; cards: unknown[] };
+    const validated = cards.map((c, i) => {
+      if (typeof c !== 'object' || c === null || !('front' in c) || !('back' in c)) {
+        throw new Error(`${label}, card ${i + 1}: "front" and "back" are required`);
+      }
+      return {
+        front: String((c as { front: unknown }).front),
+        back: String((c as { back: unknown }).back),
+      };
+    });
+    return { name, cards: validated };
+  }
+
   function handleImport() {
     setError('');
     try {
       const parsed = JSON.parse(json) as unknown;
-      if (
-        typeof parsed !== 'object' ||
-        parsed === null ||
-        !('name' in parsed) ||
-        !('cards' in parsed) ||
-        typeof (parsed as { name: unknown }).name !== 'string' ||
-        !Array.isArray((parsed as { cards: unknown }).cards)
-      ) {
-        throw new Error(
-          'Expected: { "name": "...", "cards": [{ "front": "...", "back": "..." }] }'
-        );
+      if (Array.isArray(parsed)) {
+        parsed.forEach((item, i) => {
+          const { name, cards } = parseDeck(item, `Deck ${i + 1}`);
+          onImport(name, cards, topicId || undefined);
+        });
+      } else {
+        const { name, cards } = parseDeck(parsed, 'Deck');
+        onImport(name, cards, topicId || undefined);
       }
-      const { name, cards } = parsed as { name: string; cards: unknown[] };
-      const validated = cards.map((c, i) => {
-        if (typeof c !== 'object' || c === null || !('front' in c) || !('back' in c)) {
-          throw new Error(`Card ${i + 1}: "front" and "back" are required`);
-        }
-        return {
-          front: String((c as { front: unknown }).front),
-          back: String((c as { back: unknown }).back),
-        };
-      });
-      onImport(name, validated, topicId || undefined);
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Invalid JSON');
     }
+  }
+
+  function deckCount() {
+    try {
+      const parsed = JSON.parse(json) as unknown;
+      if (Array.isArray(parsed)) return parsed.length;
+    } catch { /* ignore */ }
+    return 1;
   }
 
   return (
@@ -94,7 +117,7 @@ export default function ImportScreen({ topics, initialTopicId, onImport, onBack 
             setJson(e.target.value);
             setError('');
           }}
-          placeholder='{ "name": "...", "cards": [...] }'
+          placeholder='{ "name": "...", "cards": [...] }  or  [{ ... }, { ... }]'
           rows={10}
           style={{ ...styles.textarea, borderColor: error ? C.again : C.border }}
         />
@@ -110,7 +133,7 @@ export default function ImportScreen({ topics, initialTopicId, onImport, onBack 
             cursor: json.trim() ? 'pointer' : 'default',
           }}
         >
-          Create Deck
+          {json.trim() && deckCount() > 1 ? `Import ${deckCount()} Decks` : 'Create Deck'}
         </button>
       </div>
     </div>

@@ -836,3 +836,62 @@
   ]
 }
 ```
+
+## Test Quiz mit Erklärungen (pro Antwort – Tuple-Format)
+```json
+{
+  "name": "Russisch Grundlagen – Quiz",
+  "questions": [
+    {
+      "question": "Was bedeutet 'Привет'?",
+      "options": [
+        ["Auf Wiedersehen", "Falsch. 'Auf Wiedersehen' ist 'До свидания' (formell) oder 'Пока' (informell)."],
+        ["Danke",           "Falsch. 'Danke' heißt 'Спасибо'."],
+        ["Hallo",           "Richtig! 'Привет' (Pri-WJET) ist die informelle Begrüßung. Formal wäre 'Здравствуйте'."],
+        ["Bitte",           "Falsch. 'Bitte' heißt 'Пожалуйста'."]
+      ],
+      "correct": 2
+    },
+    {
+      "question": "Wie sagt man 'Danke' auf Russisch?",
+      "options": [
+        ["Пожалуйста", "Falsch. 'Пожалуйста' bedeutet 'Bitte' oder 'Gern geschehen' – die Antwort auf Danke."],
+        ["Спасибо",    "Richtig! 'Спасибо' (Spa-SI-ba) = Danke."],
+        ["Извините",   "Falsch. 'Извините' bedeutet 'Entschuldigung' (formell)."],
+        ["Хорошо",     "Falsch. 'Хорошо' bedeutet 'Gut' oder 'OK'."]
+      ],
+      "correct": 1
+    },
+    {
+      "question": "Welches Wort bedeutet 'Ich verstehe nicht'?",
+      "options": [
+        ["Я не знаю",    "Falsch. 'Я не знаю' = 'Ich weiß nicht'."],
+        ["Я не говорю",  "Falsch. 'Я не говорю' = 'Ich spreche nicht'."],
+        ["Я не понимаю", "Richtig! 'Я не понимаю' = ich (я) + nicht (не) + verstehe (понимаю)."],
+        ["Я не могу",    "Falsch. 'Я не могу' = 'Ich kann nicht'."]
+      ],
+      "correct": 2
+    },
+    {
+      "question": "Was bedeutet der Buchstabe 'Н н'?",
+      "options": [
+        ["Klingt wie B", "Falsch. 'Б б' klingt wie B."],
+        ["Klingt wie N", "Richtig! 'Н н' sieht aus wie H, klingt aber wie N – klassische Verwechslungsfalle."],
+        ["Klingt wie H", "Falsch. Das kyrillische H sieht wie 'Н' aus, klingt aber nicht wie H."],
+        ["Klingt wie M", "Falsch. 'М м' klingt wie M."]
+      ],
+      "correct": 1
+    },
+    {
+      "question": "Welche Zahl ist 'пять'?",
+      "options": [
+        ["3", "Falsch. 3 = три (tri)."],
+        ["4", "Falsch. 4 = четыре (tsche-TY-re)."],
+        ["5", "Richtig! пять (PJATJ) = 5."],
+        ["6", "Falsch. 6 = шесть (SCHESTJ)."]
+      ],
+      "correct": 2
+    }
+  ]
+}
+```

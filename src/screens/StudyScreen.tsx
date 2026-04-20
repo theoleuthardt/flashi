@@ -197,6 +197,7 @@ const styles: Record<string, React.CSSProperties> = {
   wrapper: { minHeight: '100dvh', background: C.bg, display: 'flex', flexDirection: 'column' },
   header: {
     padding: '16px 20px',
+    paddingTop: 'max(16px, env(safe-area-inset-top))',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'space-between',
