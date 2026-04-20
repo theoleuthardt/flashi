@@ -10,10 +10,12 @@ A self-hosted, mobile-first flashcard app powered by the SM-2 spaced repetition 
 - **Topics & folders** — organise decks into topic folders with a grid layout; drag uncategorised decks onto topic cards to assign them
 - **Dashboard** — live stats (decks, cards, due today) in a sidebar on desktop and a top bar on mobile; progress bars on every deck card
 - **Daily Mix** — one button in any topic starts a randomised study session of up to 20 cards from all the topic's decks
+- **Daily Quiz Mix** — one button in any topic assembles a mixed quiz of up to 20 random questions across all quizzes in the topic
 - **Fault repeat** — cards marked "Again" are tracked per topic; a **Repeat faults** button appears after each study session
 - **Read-aloud** — tap the speaker icon on any card to hear it read with the browser's built-in Speech Synthesis API (great for language learning)
 - **Discord reminders** — configure a webhook URL and a daily time in Settings to get a message when cards are due (see below)
-- **Quizzes** — import multiple-choice quizzes (JSON) per topic; A/B/C/D options with reveal-on-select, score screen with fault review
+- **Quizzes** — import multiple-choice quizzes (JSON) per topic; each answer option can carry its own explanation that is revealed inline after selecting (like NotebookLM); score screen with fault review
+- **Quiz progress** — unfinished quizzes are saved to localStorage and resume from the right question; a restart FAB (↺) lets you start over with a confirmation
 - **Progression** — overview screen with overall % learned and per-topic stacked bars (learned / due / new)
 - **Multi-user** — admin can create and remove additional user accounts; per-user data stored on the server volume
 - **Auth** — bcrypt password hashing, JWT sessions (30 days); users can change their own password in Settings
@@ -97,16 +99,22 @@ Open the app in a browser — you will be prompted to create an admin account (u
 
 ## Importing Decks
 
-Ask an AI to generate flashcard decks in the following JSON format:
+Ask an AI to generate flashcard decks in the following JSON format and paste it in the app under **+ Create deck**:
 
 ```json
-{
-  "name": "Lesson 1 – Cyrillic Alphabet",
-  "cards": [
-    { "front": "А а", "back": "A (as in father)" },
-    { "front": "Б б", "back": "B (as in book)" }
-  ]
-}
+{ "name": "Lesson 1 – Cyrillic Alphabet", "cards": [
+  { "front": "А а", "back": "A (as in father)" },
+  { "front": "Б б", "back": "B (as in book)" }
+]}
+```
+
+To import multiple decks at once, wrap them in a JSON array:
+
+```json
+[
+  { "name": "Deck 1", "cards": [{ "front": "...", "back": "..." }] },
+  { "name": "Deck 2", "cards": [{ "front": "...", "back": "..." }] }
+]
 ```
 
 In the app: **+ Create deck** → paste JSON → optionally assign to a topic → **Create Deck**.
@@ -115,7 +123,7 @@ In the app: **+ Create deck** → paste JSON → optionally assign to a topic �
 
 ## Importing Quizzes
 
-Ask an AI to generate quizzes in the following JSON format:
+Ask an AI to generate quizzes in the following JSON format. Each answer option can be a plain string or a `[text, explanation]` tuple — the explanation is revealed inline after the user selects an answer.
 
 ```json
 {
@@ -123,14 +131,21 @@ Ask an AI to generate quizzes in the following JSON format:
   "questions": [
     {
       "question": "What sound does 'А а' make?",
-      "options": ["A (as in father)", "B (as in book)", "V (as in victory)", "G (as in go)"],
+      "options": [
+        ["A (as in father)", "Correct — А а is the first letter and sounds like the 'a' in 'father'."],
+        ["B (as in book)", "Incorrect — that is Б б."],
+        ["V (as in victory)", "Incorrect — that is В в."],
+        ["G (as in go)", "Incorrect — that is Г г."]
+      ],
       "correct": 0
     }
   ]
 }
 ```
 
-`correct` is the zero-based index of the right answer.
+`correct` is the zero-based index of the right answer. Plain strings work too if you don't need per-option explanations.
+
+To import multiple quizzes at once, wrap them in a JSON array.
 
 In the app: **+ Create quiz** (inside a topic) → paste JSON → **Create Quiz**.
 
@@ -178,6 +193,7 @@ From there you can add or remove user accounts.
 > **Tip:** For HTTPS (required for reliable PWA behaviour) place an Nginx reverse proxy with Let's Encrypt in front.
 
 ---
+
 ## Project Structure
 
 ```
@@ -192,7 +208,7 @@ flashi/
 │   ├── theme.ts        # Design tokens
 │   └── types.ts        # TypeScript interfaces
 ├── server/
-│   └── index.ts        # Express backend (auth + admin API)
+│   └── index.ts        # Express backend (auth + data API)
 ├── public/
 │   └── manifest.json   # PWA manifest
 ├── Dockerfile
@@ -205,11 +221,11 @@ flashi/
 
 | Layer | Technology |
 |---|---|
-| Frontend | React 18 + TypeScript + Vite 8 |
+| Frontend | React 18 + TypeScript + Vite |
 | Styling | Inline styles + CSS animations |
 | Backend | Express + bcryptjs + jsonwebtoken |
 | Storage | JSON files per user (server volume) · localStorage cache (client) |
-| Containerisation | Docker + Docker Compose |
+| Containerisation | Docker / Podman + Compose |
 
 ---
 
