@@ -37,12 +37,19 @@ export interface QuizQuestion {
   correct: number;       // 0-based index of the correct option
 }
 
+export interface QuizResult {
+  date: string;    // YYYY-MM-DD
+  correct: number;
+  total: number;
+}
+
 export interface Quiz {
   id: string;
   name: string;
   created: string;
   topicId?: string;
   questions: QuizQuestion[];
+  results?: QuizResult[];
 }
 
 export interface QuizAnswer {

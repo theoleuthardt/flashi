@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import type { AppState, Screen, Card, Deck, Topic, FlashiData, Rating, Quiz, QuizQuestion, QuizAnswer } from './types';
+import type { AppState, Screen, Card, Deck, Topic, FlashiData, Rating, Quiz, QuizQuestion, QuizAnswer, QuizResult } from './types';
 import { getAuthStatus, verifyToken, setToken, clearToken, decodeToken, loadUserData, saveUserData } from './utils/api';
 import { loadData, saveData } from './utils/storage';
 import { getDueCards, newCard, applyRating, todayStr } from './utils/srs';
@@ -118,8 +118,7 @@ export default function App() {
   }
 
   function dueCount(deckId: string): number {
-    const t = todayStr();
-    return (data.cards[deckId] ?? []).filter((c) => c.due <= t).length;
+    return (data.cards[deckId] ?? []).filter((c) => c.reps === 0).length;
   }
 
   function startStudy(deckId: string) {
@@ -279,6 +278,20 @@ export default function App() {
     mutate({ ...data, quizzes: (data.quizzes ?? []).filter((q) => q.id !== quizId) });
   }
 
+  function deleteBatch(deckIds: string[], quizIds: string[]) {
+    let next = data;
+    const nc = { ...next.cards };
+    for (const id of deckIds) {
+      delete nc[id];
+      next = { ...next, decks: next.decks.filter((d) => d.id !== id), cards: nc };
+    }
+    if (quizIds.length > 0) {
+      const quizSet = new Set(quizIds);
+      next = { ...next, quizzes: (next.quizzes ?? []).filter((q) => !quizSet.has(q.id)) };
+    }
+    mutate(next);
+  }
+
   function deleteTopic(topicId: string) {
     const nc = { ...data.cards };
     const decksToRemove = data.decks.filter((d) => d.topicId === topicId).map((d) => d.id);
@@ -435,7 +448,18 @@ export default function App() {
       <>
         <QuizScreen
           quiz={quiz}
-          onDone={(answers) => { setQuizAnswers(answers); setScreen('quiz-results'); }}
+          onDone={(answers) => {
+            if (!mixQuiz && activeQuizId) {
+              const correct = answers.filter((a) => a.selected === a.correct).length;
+              const result: QuizResult = { date: todayStr(), correct, total: answers.length };
+              const updatedQuizzes = (data.quizzes ?? []).map((q) =>
+                q.id === activeQuizId ? { ...q, results: [...(q.results ?? []), result] } : q
+              );
+              mutate({ ...data, quizzes: updatedQuizzes });
+            }
+            setQuizAnswers(answers);
+            setScreen('quiz-results');
+          }}
           onBack={() => { setMixQuiz(null); setScreen(activeTopicId ? 'topic' : 'home'); }}
         />
         {themeToggle}
@@ -484,11 +508,14 @@ export default function App() {
           onCreateQuiz={() => setScreen('quiz-import')}
           onStartQuiz={(quizId) => { setActiveQuizId(quizId); setQuizAnswers([]); setScreen('quiz'); }}
           onDeleteQuiz={deleteQuiz}
+          onDeleteBatch={deleteBatch}
           onDailyMix={() => startDailyMix(activeTopicId)}
           onDailyQuizMix={() => startDailyQuizMix(activeTopicId)}
           faultCount={faultCount}
           onRepeatFaults={() => repeatTopicFaults(activeTopicId)}
           onBack={() => setScreen('home')}
+          theme={theme}
+          onToggleTheme={toggleTheme}
         />
         {themeToggle}
       </>
@@ -513,6 +540,8 @@ export default function App() {
         onSettings={() => setScreen('settings')}
         onProgression={() => setScreen('progression')}
         onLogout={handleLogout}
+        theme={theme}
+        onToggleTheme={toggleTheme}
       />
       {themeToggle}
     </>

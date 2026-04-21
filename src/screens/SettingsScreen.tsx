@@ -69,7 +69,6 @@ export default function SettingsScreen({ onBack }: Props) {
       </div>
 
       <div style={styles.content}>
-        {/* ── Security ──────────────────── */}
         <section style={styles.section}>
           <h3 style={styles.sectionTitle}>Security</h3>
 
@@ -116,7 +115,6 @@ export default function SettingsScreen({ onBack }: Props) {
           </button>
         </section>
 
-        {/* ── Notifications ──────────────── */}
         <section style={styles.section}>
           <h3 style={styles.sectionTitle}>Daily Reminder</h3>
           <p style={styles.hint}>

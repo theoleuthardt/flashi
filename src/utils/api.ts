@@ -77,8 +77,6 @@ export async function verifyToken(): Promise<boolean> {
   }
 }
 
-// ── User Data ─────────────────────────────────────────────────────
-
 export async function loadUserData(): Promise<FlashiData> {
   return request<FlashiData>('/data');
 }
@@ -89,8 +87,6 @@ export async function saveUserData(data: FlashiData): Promise<void> {
     body: JSON.stringify(data),
   });
 }
-
-// ── User Settings ─────────────────────────────────────────────────
 
 export interface UserSettings {
   discordWebhook: string;
@@ -109,16 +105,12 @@ export async function saveUserSettings(settings: UserSettings): Promise<void> {
   });
 }
 
-// ── Auth ──────────────────────────────────────────────────────────
-
 export async function changePassword(currentPassword: string, newPassword: string): Promise<void> {
   await request('/auth/change-password', {
     method: 'POST',
     body: JSON.stringify({ currentPassword, newPassword }),
   });
 }
-
-// ── Admin ─────────────────────────────────────────────────────────
 
 export async function getAdminUsers(): Promise<{
   users: Array<{ username: string; isAdmin: boolean }>;

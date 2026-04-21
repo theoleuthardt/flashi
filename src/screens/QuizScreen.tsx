@@ -126,35 +126,28 @@ export default function QuizScreen({ quiz, onDone, onBack }: Props) {
             const explanation = optExplanation(opt);
             const isCorrect = idx === question.correct;
             const isWrongSelected = revealed && idx === selected && !isCorrect;
-            const hasExplanation = revealed && !!explanation;
+            const showExplanation = revealed && !!explanation;
             return (
               <div key={idx}>
                 <button
-                  style={{
-                    ...optionStyle(idx),
-                    ...(hasExplanation ? { borderBottomLeftRadius: 0, borderBottomRightRadius: 0, borderBottom: 'none' } : {}),
-                  }}
+                  style={optionStyle(idx)}
                   onClick={() => handleSelect(idx)}
                 >
                   <span style={styles.optionLetter}>{String.fromCharCode(65 + idx)}</span>
-                  <span style={styles.optionText}>{text}</span>
+                  <div style={styles.optionContent}>
+                    <span style={styles.optionText}>{text}</span>
+                    {showExplanation && (
+                      <span style={{
+                        ...styles.optionExplanation,
+                        color: isCorrect ? C.good : isWrongSelected ? C.again : C.mutedLight,
+                      }}>
+                        {explanation}
+                      </span>
+                    )}
+                  </div>
                   {revealed && isCorrect && <span style={styles.optionBadge}>✓</span>}
                   {isWrongSelected && <span style={styles.optionBadge}>✗</span>}
                 </button>
-                {hasExplanation && (
-                  <div style={{
-                    ...styles.explanationInline,
-                    background: isCorrect
-                      ? 'var(--good-bg)'
-                      : isWrongSelected
-                        ? 'var(--again-bg)'
-                        : C.surface,
-                    borderColor: isCorrect ? C.good : isWrongSelected ? C.again : C.border,
-                    color: isCorrect ? C.good : isWrongSelected ? C.again : C.mutedLight,
-                  }}>
-                    {explanation}
-                  </div>
-                )}
               </div>
             );
           })}
@@ -314,20 +307,10 @@ const styles: Record<string, React.CSSProperties> = {
     color: C.mutedLight,
     flexShrink: 0,
   } as React.CSSProperties,
-  optionText: { flex: 1, fontSize: 14, lineHeight: 1.4 },
+  optionContent: { flex: 1, display: 'flex', flexDirection: 'column', gap: 4 },
+  optionText: { fontSize: 14, lineHeight: 1.4 },
+  optionExplanation: { fontSize: 12, lineHeight: 1.5, fontStyle: 'italic', opacity: 0.9 },
   optionBadge: { fontSize: 16, fontWeight: 700, flexShrink: 0 },
-  explanationInline: {
-    width: '100%',
-    borderWidth: 1,
-    borderStyle: 'solid',
-    borderTopWidth: 0,
-    borderBottomLeftRadius: 14,
-    borderBottomRightRadius: 14,
-    padding: '10px 16px',
-    fontSize: 13,
-    lineHeight: 1.55,
-    fontStyle: 'italic',
-  },
   nextBtn: {
     marginTop: 8,
     background: C.accent,
