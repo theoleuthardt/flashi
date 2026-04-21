@@ -508,11 +508,14 @@ export default function App() {
           onCreateQuiz={() => setScreen('quiz-import')}
           onStartQuiz={(quizId) => { setActiveQuizId(quizId); setQuizAnswers([]); setScreen('quiz'); }}
           onDeleteQuiz={deleteQuiz}
+          onDeleteBatch={deleteBatch}
           onDailyMix={() => startDailyMix(activeTopicId)}
           onDailyQuizMix={() => startDailyQuizMix(activeTopicId)}
           faultCount={faultCount}
           onRepeatFaults={() => repeatTopicFaults(activeTopicId)}
           onBack={() => setScreen('home')}
+          theme={theme}
+          onToggleTheme={toggleTheme}
         />
         {themeToggle}
       </>

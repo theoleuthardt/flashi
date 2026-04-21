@@ -281,6 +281,46 @@ button:active {
 .card-enter-left  { animation: slideInLeft   0.32s ease-out forwards; }
 .card-enter-right { animation: slideInRight  0.32s ease-out forwards; }
 
+/* ── Topic island hover / focus / select effects ───────────── */
+.topic-island {
+  appearance: none;
+  -webkit-appearance: none;
+  border: none !important;
+  outline: none;
+  transition: box-shadow 0.15s, transform 0.12s;
+}
+.topic-island:hover:not(:disabled),
+.topic-island:focus-visible {
+  box-shadow: 0 0 0 2px var(--accent), 0 6px 24px rgba(0,0,0,0.22) !important;
+  outline: none;
+  transform: translateY(-1px);
+}
+.topic-island.island-done:hover:not(:disabled),
+.topic-island.island-done:focus-visible {
+  box-shadow: 0 0 0 2px var(--good), 0 6px 24px rgba(0,0,0,0.18) !important;
+}
+.topic-island.island-selected {
+  box-shadow: 0 0 0 2px var(--again) !important;
+}
+.topic-island.island-selected:hover {
+  transform: none;
+}
+/* FAB menu overlay backdrop */
+.fab-menu-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+}
+
+/* ── Sidebar action buttons ─────────────────────────────────── */
+.sidebar-btn {
+  transition: border-color 0.15s, color 0.15s;
+}
+.sidebar-btn:hover {
+  border-color: var(--accent) !important;
+  color: var(--muted-light) !important;
+}
+
 /* ── Theme toggle button ───────────────────────────────────── */
 .theme-toggle {
   position: fixed;
