@@ -120,7 +120,15 @@ export default function QuizImportScreen({ topics, initialTopicId, onImport, onB
         <p style={styles.hint}>
           Paste a single quiz or an array of quizzes. Each option can be a plain string <code style={styles.code}>"text"</code> or a pair <code style={styles.code}>["text", "explanation"]</code>.
         </p>
-        <pre style={styles.example}>{EXAMPLE}</pre>
+        <div style={{ position: 'relative' }}>
+          <pre style={styles.example}>{EXAMPLE}</pre>
+          <button
+            onClick={() => { setJson(EXAMPLE); setError(''); }}
+            style={styles.useExampleBtn}
+          >
+            Use example
+          </button>
+        </div>
 
         {topics.length > 0 && (
           <div>
@@ -219,6 +227,19 @@ const styles: Record<string, React.CSSProperties> = {
     resize: 'vertical',
     lineHeight: 1.6,
     width: '100%',
+  },
+  useExampleBtn: {
+    position: 'absolute',
+    bottom: 8,
+    right: 8,
+    background: C.surface2,
+    border: `1px solid ${C.border}`,
+    borderRadius: 8,
+    color: C.mutedLight,
+    cursor: 'pointer',
+    fontSize: 11,
+    fontWeight: 600,
+    padding: '4px 10px',
   },
   error: { color: C.again, fontSize: 13 },
   importBtn: {
