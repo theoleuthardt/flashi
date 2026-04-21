@@ -98,12 +98,13 @@ export default function ProgressionScreen({ data, onBack }: Props) {
           const topicCards = topicDecks.flatMap((d) => data.cards[d.id] ?? []);
           const stats = cardStats(topicCards);
           const pct = stats.total > 0 ? Math.round((stats.learned / stats.total) * 100) : 0;
+          const topicQuizzes = (data.quizzes ?? []).filter((q) => q.topicId === topic.id);
           return (
             <div key={topic.id} style={styles.topicCard}>
               <div style={styles.topicHeader}>
                 <div style={styles.topicLeft}>
                   <span style={styles.topicName}>{topic.name}</span>
-                  <span style={styles.topicMeta}>{topicDecks.length} deck{topicDecks.length !== 1 ? 's' : ''} · {stats.total} cards</span>
+                  <span style={styles.topicMeta}>{topicDecks.length} deck{topicDecks.length !== 1 ? 's' : ''} · {stats.total} cards{topicQuizzes.length > 0 ? ` · ${topicQuizzes.length} quiz${topicQuizzes.length !== 1 ? 'zes' : ''}` : ''}</span>
                 </div>
                 <span style={{ ...styles.topicPct, color: pct >= 80 ? C.good : pct >= 40 ? C.hard : C.muted }}>
                   {pct}%
@@ -129,6 +130,52 @@ export default function ProgressionScreen({ data, onBack }: Props) {
                         <div style={{ flex: 1, minWidth: 60 }}>
                           <StackedBar learned={ds.learned} due={ds.due} newCards={ds.new} total={ds.total} />
                         </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+
+              {topicQuizzes.length > 0 && (
+                <div style={styles.quizSection}>
+                  <p style={styles.quizSectionLabel}>Quizzes</p>
+                  {topicQuizzes.map((quiz) => {
+                    const results = quiz.results ?? [];
+                    const lastResult = results[results.length - 1];
+                    const lastPct = lastResult
+                      ? Math.round((lastResult.correct / lastResult.total) * 100)
+                      : null;
+                    const bestPct = results.length > 0
+                      ? Math.round(Math.max(...results.map((r) => (r.correct / r.total) * 100)))
+                      : null;
+                    let inProgress = false;
+                    if (results.length === 0) {
+                      try {
+                        const saved = localStorage.getItem(`flashi-quiz-progress-${quiz.id}`);
+                        if (saved) {
+                          const p = JSON.parse(saved) as { currentIndex: number; answers: unknown[] };
+                          if (p.currentIndex > 0 || p.answers?.length > 0) inProgress = true;
+                        }
+                      } catch { /* ignore */ }
+                    }
+                    return (
+                      <div key={quiz.id} style={styles.quizRow}>
+                        <div style={styles.deckRowLeft}>
+                          <span style={styles.deckName}>{quiz.name}</span>
+                          <span style={styles.deckMeta}>{quiz.questions.length} questions · {results.length} attempt{results.length !== 1 ? 's' : ''}</span>
+                        </div>
+                        {lastPct !== null ? (
+                          <>
+                            <span style={{ ...styles.deckPct, color: lastPct >= 80 ? C.good : lastPct >= 40 ? C.hard : C.muted }}>
+                              {lastPct}%
+                            </span>
+                            <span style={styles.quizBest}>best {bestPct}%</span>
+                          </>
+                        ) : inProgress ? (
+                          <span style={{ ...styles.deckPct, color: C.hard, fontSize: 10 }}>▶</span>
+                        ) : (
+                          <span style={{ ...styles.deckPct, color: C.muted, fontSize: 10 }}>—</span>
+                        )}
                       </div>
                     );
                   })}
@@ -268,6 +315,10 @@ const styles: Record<string, React.CSSProperties> = {
   },
   deckMeta: { color: C.muted, fontSize: 10 },
   deckPct: { fontSize: 12, fontWeight: 600, width: 32, textAlign: 'right', flexShrink: 0 },
+  quizSection: { display: 'flex', flexDirection: 'column', gap: 8, marginTop: 4, borderTop: `1px solid ${C.border}`, paddingTop: 10 },
+  quizSectionLabel: { color: C.muted, fontSize: 10, fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase' as const },
+  quizRow: { display: 'flex', alignItems: 'center', gap: 10 },
+  quizBest: { color: C.muted, fontSize: 10, flexShrink: 0 },
   dueHint: {
     background: 'var(--easy-bg)',
     border: `1px solid var(--easy-border)`,
