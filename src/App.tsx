@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import type { AppState, Screen, Card, Deck, Topic, FlashiData, Rating, Quiz, QuizQuestion, QuizAnswer } from './types';
+import type { AppState, Screen, Card, Deck, Topic, FlashiData, Rating, Quiz, QuizQuestion, QuizAnswer, QuizResult } from './types';
 import { getAuthStatus, verifyToken, setToken, clearToken, decodeToken, loadUserData, saveUserData } from './utils/api';
 import { loadData, saveData } from './utils/storage';
 import { getDueCards, newCard, applyRating, todayStr } from './utils/srs';
@@ -435,7 +435,18 @@ export default function App() {
       <>
         <QuizScreen
           quiz={quiz}
-          onDone={(answers) => { setQuizAnswers(answers); setScreen('quiz-results'); }}
+          onDone={(answers) => {
+            if (!mixQuiz && activeQuizId) {
+              const correct = answers.filter((a) => a.selected === a.correct).length;
+              const result: QuizResult = { date: todayStr(), correct, total: answers.length };
+              const updatedQuizzes = (data.quizzes ?? []).map((q) =>
+                q.id === activeQuizId ? { ...q, results: [...(q.results ?? []), result] } : q
+              );
+              mutate({ ...data, quizzes: updatedQuizzes });
+            }
+            setQuizAnswers(answers);
+            setScreen('quiz-results');
+          }}
           onBack={() => { setMixQuiz(null); setScreen(activeTopicId ? 'topic' : 'home'); }}
         />
         {themeToggle}
