@@ -347,6 +347,7 @@ export default function TopicScreen({
                 )}
                 <button
                   onClick={() => { setMixOpen((o) => !o); setFabOpen(false); }}
+                  className="fab-mix-btn"
                   style={{
                     ...styles.fabMix,
                     boxShadow: mixOpen ? '0 0 0 2px var(--accent), 0 4px 20px var(--accent-shadow-sm)' : undefined,
@@ -376,6 +377,7 @@ export default function TopicScreen({
               )}
               <button
                 onClick={() => { setFabOpen((o) => !o); setMixOpen(false); }}
+                className="fab-btn"
                 style={{
                   ...styles.fab,
                   transform: fabOpen ? 'rotate(45deg)' : 'none',

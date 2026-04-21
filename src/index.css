@@ -312,6 +312,30 @@ button:active {
   z-index: 90;
 }
 
+/* ── FAB buttons ────────────────────────────────────────────── */
+.fab-btn {
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+.fab-btn:hover {
+  transform: scale(1.1);
+  box-shadow: 0 8px 36px var(--accent-shadow) !important;
+}
+.fab-btn:active {
+  opacity: 1;
+  transform: scale(0.93);
+}
+.fab-mix-btn {
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+.fab-mix-btn:hover {
+  transform: scale(1.1);
+  box-shadow: 0 4px 20px var(--accent-shadow-sm), 0 0 0 1px var(--accent-border) !important;
+}
+.fab-mix-btn:active {
+  opacity: 1;
+  transform: scale(0.93);
+}
+
 /* ── Sidebar action buttons ─────────────────────────────────── */
 .sidebar-btn {
   transition: border-color 0.15s, color 0.15s;
