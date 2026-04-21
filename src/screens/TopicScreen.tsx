@@ -340,7 +340,7 @@ export default function TopicScreen({
                     )}
                     {totalCards > 0 && (
                       <button onClick={() => { onDailyMix(); setMixOpen(false); }} style={styles.fabMenuItem}>
-                        ✨ Daily mix
+                        ✨ Daily deck mix
                       </button>
                     )}
                   </div>
