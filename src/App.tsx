@@ -279,6 +279,20 @@ export default function App() {
     mutate({ ...data, quizzes: (data.quizzes ?? []).filter((q) => q.id !== quizId) });
   }
 
+  function deleteBatch(deckIds: string[], quizIds: string[]) {
+    let next = data;
+    const nc = { ...next.cards };
+    for (const id of deckIds) {
+      delete nc[id];
+      next = { ...next, decks: next.decks.filter((d) => d.id !== id), cards: nc };
+    }
+    if (quizIds.length > 0) {
+      const quizSet = new Set(quizIds);
+      next = { ...next, quizzes: (next.quizzes ?? []).filter((q) => !quizSet.has(q.id)) };
+    }
+    mutate(next);
+  }
+
   function deleteTopic(topicId: string) {
     const nc = { ...data.cards };
     const decksToRemove = data.decks.filter((d) => d.topicId === topicId).map((d) => d.id);
