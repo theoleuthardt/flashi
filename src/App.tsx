@@ -118,8 +118,7 @@ export default function App() {
   }
 
   function dueCount(deckId: string): number {
-    const t = todayStr();
-    return (data.cards[deckId] ?? []).filter((c) => c.due <= t).length;
+    return (data.cards[deckId] ?? []).filter((c) => c.reps === 0).length;
   }
 
   function startStudy(deckId: string) {
