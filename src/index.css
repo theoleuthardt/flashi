@@ -314,11 +314,17 @@ button:active {
 
 /* ── FAB buttons ────────────────────────────────────────────── */
 .fab-btn {
-  transition: transform 0.15s, box-shadow 0.15s;
+  transition: transform 0.2s ease, box-shadow 0.15s;
 }
 .fab-btn:hover {
   transform: scale(1.1);
   box-shadow: 0 8px 36px var(--accent-shadow) !important;
+}
+.fab-btn.fab-btn--open {
+  transform: rotate(45deg);
+}
+.fab-btn.fab-btn--open:hover {
+  transform: rotate(45deg) scale(1.1);
 }
 .fab-btn:active {
   opacity: 1;

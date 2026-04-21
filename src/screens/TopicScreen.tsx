@@ -377,12 +377,8 @@ export default function TopicScreen({
               )}
               <button
                 onClick={() => { setFabOpen((o) => !o); setMixOpen(false); }}
-                className="fab-btn"
-                style={{
-                  ...styles.fab,
-                  transform: fabOpen ? 'rotate(45deg)' : 'none',
-                  transition: 'transform 0.2s ease, box-shadow 0.2s',
-                }}
+                className={`fab-btn${fabOpen ? ' fab-btn--open' : ''}`}
+                style={styles.fab}
                 aria-label={fabOpen ? 'Close menu' : 'Open menu'}
               >
                 +
