@@ -2,38 +2,38 @@
 
 /* ── Theme tokens ──────────────────────────────────────────── */
 :root {
-  /* Dark – black & blue */
-  --bg:            #05051a;
-  --surface:       #0d0d24;
-  --surface2:      #161636;
-  --border:        #303060;
+  /* Dark – true black with blue contrast */
+  --bg:            #000000;
+  --surface:       #0c0c1a;
+  --surface2:      #0e0e1c;
+  --border:        #1a2848;
   --accent:        #5585ff;
   --accent-dim:    #3a62d4;
-  --text:          #eaeaf8;
-  --muted:         #7878b8;
-  --muted-light:   #acace0;
+  --text:          #e8e8f8;
+  --muted:         #7282b8;
+  --muted-light:   #aabcd8;
   --again:         #e05252;
   --hard:          #d08030;
   --good:          #38b864;
   --easy:          #5a9eff;
 
   /* Pre-computed alpha values */
-  --accent-border:    rgba(85,133,255,0.35);
-  --accent-shadow:    rgba(85,133,255,0.38);
-  --accent-shadow-sm: rgba(85,133,255,0.22);
-  --again-bg:         rgba(224,82,82,0.10);
-  --again-bg-strong:  rgba(224,82,82,0.22);
-  --again-border:     rgba(224,82,82,0.34);
-  --again-subtle:     rgba(224,82,82,0.27);
-  --hard-bg:          rgba(208,128,48,0.10);
-  --hard-bg-strong:   rgba(208,128,48,0.22);
-  --hard-border:      rgba(208,128,48,0.34);
-  --good-bg:          rgba(56,184,100,0.10);
-  --good-bg-strong:   rgba(56,184,100,0.22);
-  --good-border:      rgba(56,184,100,0.34);
-  --easy-bg:          rgba(90,158,255,0.10);
-  --easy-bg-strong:   rgba(90,158,255,0.22);
-  --easy-border:      rgba(90,158,255,0.34);
+  --accent-border:    rgba(85,133,255,0.40);
+  --accent-shadow:    rgba(85,133,255,0.42);
+  --accent-shadow-sm: rgba(85,133,255,0.25);
+  --again-bg:         rgba(224,82,82,0.12);
+  --again-bg-strong:  rgba(224,82,82,0.24);
+  --again-border:     rgba(224,82,82,0.38);
+  --again-subtle:     rgba(224,82,82,0.30);
+  --hard-bg:          rgba(208,128,48,0.12);
+  --hard-bg-strong:   rgba(208,128,48,0.24);
+  --hard-border:      rgba(208,128,48,0.38);
+  --good-bg:          rgba(56,184,100,0.12);
+  --good-bg-strong:   rgba(56,184,100,0.24);
+  --good-border:      rgba(56,184,100,0.38);
+  --easy-bg:          rgba(90,158,255,0.12);
+  --easy-bg-strong:   rgba(90,158,255,0.24);
+  --easy-border:      rgba(90,158,255,0.38);
 }
 
 [data-theme='light'] {
@@ -103,7 +103,7 @@ body::before {
   inset: 0;
   pointer-events: none;
   z-index: 0;
-  background: radial-gradient(ellipse 90% 60% at 50% -10%, rgba(85,133,255,0.07) 0%, transparent 70%);
+  background: radial-gradient(ellipse 90% 60% at 50% -10%, rgba(85,133,255,0.12) 0%, transparent 70%);
   transition: opacity 0.3s ease;
 }
 [data-theme='light'] body::before {
