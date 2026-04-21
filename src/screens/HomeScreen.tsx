@@ -41,6 +41,8 @@ interface Props {
   onSettings: () => void;
   onProgression: () => void;
   onLogout: () => void;
+  theme: 'dark' | 'light';
+  onToggleTheme: () => void;
 }
 
 export default function HomeScreen({
@@ -56,6 +58,8 @@ export default function HomeScreen({
   onSettings,
   onProgression,
   onLogout,
+  theme,
+  onToggleTheme,
 }: Props) {
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
   const [assignTarget, setAssignTarget] = useState<string | null>(null);
@@ -66,12 +70,23 @@ export default function HomeScreen({
 
   const totalDue = data.decks.reduce((s, d) => s + dueCount(d.id), 0);
   const totalCards = data.decks.reduce((s, d) => s + (data.cards[d.id]?.length ?? 0), 0);
+  const totalQuizzes = (data.quizzes ?? []).length;
+  const totalQuestions = (data.quizzes ?? []).reduce((s, q) => s + q.questions.length, 0);
   const unassignedDecks = data.decks.filter((d) => !d.topicId);
 
   const stats = [
     { label: 'Decks', val: data.decks.length },
     { label: 'Cards', val: totalCards },
-    { label: 'Due today', val: totalDue },
+    { label: 'Quizzes', val: totalQuizzes },
+    { label: 'Questions', val: totalQuestions },
+    { label: 'Due', val: totalDue },
+  ];
+
+  const mobileStats = [
+    { label: 'Decks', val: data.decks.length },
+    { label: 'Cards', val: totalCards },
+    { label: 'Quizzes', val: totalQuizzes },
+    { label: 'Due', val: totalDue },
   ];
 
   function topicDue(t: Topic) {
@@ -84,6 +99,9 @@ export default function HomeScreen({
   }
   function topicDeckCount(t: Topic) {
     return data.decks.filter((d) => d.topicId === t.id).length;
+  }
+  function topicQuizCount(t: Topic) {
+    return (data.quizzes ?? []).filter((q) => q.topicId === t.id).length;
   }
 
   function handleCreateTopic() {
@@ -112,25 +130,30 @@ export default function HomeScreen({
         </div>
         <div style={styles.sidebarActions}>
           {onAdmin && (
-            <button onClick={onAdmin} style={styles.adminBtn}>
+            <button onClick={onAdmin} className="sidebar-btn" style={styles.adminBtn}>
               👥 Users
             </button>
           )}
-          <button onClick={onProgression} style={{ ...styles.adminBtn, display: 'flex', alignItems: 'center', gap: 6 }}>
+          <button onClick={onProgression} className="sidebar-btn" style={styles.adminBtn}>
             <ProgressionIcon /> Progression
           </button>
-          <button onClick={onSettings} style={{ ...styles.adminBtn, display: 'flex', alignItems: 'center', gap: 6 }}>
+          <button onClick={onSettings} className="sidebar-btn" style={styles.adminBtn}>
             <GearIcon /> Settings
           </button>
-          <button onClick={onLogout} style={styles.logoutBtn}>
-            ↩ Logout
-          </button>
+          <div style={styles.logoutRow}>
+            <button onClick={onLogout} className="sidebar-btn" style={styles.logoutBtn}>
+              ↩ Logout
+            </button>
+            <button onClick={onToggleTheme} style={styles.sidebarThemeBtn} title="Toggle theme">
+              {theme === 'dark' ? '🌙' : '☀️'}
+            </button>
+          </div>
         </div>
       </aside>
 
       <div className="app-main" style={{ display: 'flex', flexDirection: 'column' }}>
         <div className="mobile-stats">
-          {stats.map(({ label, val }) => (
+          {mobileStats.map(({ label, val }) => (
             <div key={label} style={styles.mobileStatCell}>
               <span style={styles.mobileStatVal}>{val}</span>
               <span style={styles.mobileStatLabel}>{label}</span>
@@ -167,21 +190,23 @@ export default function HomeScreen({
         <div style={styles.list}>
           {(data.topics.length > 0 || data.decks.length === 0) && (
             <div style={styles.section}>
-              <div style={styles.sectionHeader}>
-                <span style={styles.sectionTitle}>Topics</span>
-                <button onClick={() => setShowNewTopic(true)} style={styles.newTopicBtn}>
-                  + New topic
-                </button>
-              </div>
+              {data.topics.length > 0 && (
+                <div style={styles.sectionHeader}>
+                  <span style={styles.sectionTitle}>Topics</span>
+                </div>
+              )}
 
               {data.topics.length === 0 && data.decks.length === 0 && (
                 <div style={styles.empty}>
                   <div style={styles.emptyIcon}>📚</div>
-                  <p style={styles.emptyTitle}>No decks yet</p>
+                  <p style={styles.emptyTitle}>No topics yet</p>
                   <p style={styles.emptyHint}>
                     Create a topic to organise your decks, then import a deck — or ask an AI to
                     generate flashcards in JSON format for you!
                   </p>
+                  <button onClick={() => setShowNewTopic(true)} style={styles.createFirstTopicBtn}>
+                    + Create first topic
+                  </button>
                 </div>
               )}
 
@@ -192,9 +217,11 @@ export default function HomeScreen({
                   const deckCount = topicDeckCount(t);
                   const topicPct = cards > 0 ? Math.round((1 - due / cards) * 100) : 100;
                   const isDropTarget = dragOverTopicId === t.id;
+                  const quizCount = topicQuizCount(t);
                   return (
                     <button
                       key={t.id}
+                      className="topic-island"
                       onClick={() => onOpenTopic(t.id)}
                       style={{
                         ...styles.topicCard,
@@ -216,6 +243,7 @@ export default function HomeScreen({
                       <div style={styles.topicName}>{t.name}</div>
                       <div style={styles.topicMeta}>
                         {deckCount} deck{deckCount !== 1 ? 's' : ''} · {cards} cards
+                        {quizCount > 0 && ` · ${quizCount} quiz${quizCount !== 1 ? 'zes' : ''}`}
                       </div>
                       {cards > 0 && (
                         <div style={{ ...styles.topicPct, color: topicPct >= 80 ? C.good : topicPct >= 40 ? C.hard : C.muted }}>
@@ -259,11 +287,6 @@ export default function HomeScreen({
                 <span style={styles.sectionTitle}>
                   {data.topics.length > 0 ? 'Uncategorised' : 'Decks'}
                 </span>
-                {data.topics.length === 0 && (
-                  <button onClick={() => setShowNewTopic(true)} style={styles.newTopicBtn}>
-                    + New topic
-                  </button>
-                )}
               </div>
 
               <div style={styles.deckScrollList}>
@@ -394,9 +417,11 @@ export default function HomeScreen({
           </div>
         )}
 
-        <button onClick={onImport} style={styles.fab}>
-          + Create deck
-        </button>
+        {data.topics.length > 0 && (
+          <button onClick={() => setShowNewTopic(true)} style={styles.fab}>
+            + New topic
+          </button>
+        )}
       </div>
     </div>
   );
@@ -469,7 +494,15 @@ const styles: Record<string, React.CSSProperties> = {
     cursor: 'pointer',
     fontSize: 12,
     padding: '8px 12px',
-    alignSelf: 'flex-start',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+  },
+  logoutRow: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 8,
   },
   logoutBtn: {
     background: 'none',
@@ -479,8 +512,22 @@ const styles: Record<string, React.CSSProperties> = {
     cursor: 'pointer',
     fontSize: 12,
     padding: '8px 12px',
-    alignSelf: 'flex-start',
+    flex: 1,
+    textAlign: 'center',
   },
+  sidebarThemeBtn: {
+    background: C.surface2,
+    border: `1px solid ${C.border}`,
+    borderRadius: '50%',
+    width: 34,
+    height: 34,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    fontSize: 16,
+    cursor: 'pointer',
+    flexShrink: 0,
+  } as React.CSSProperties,
   adminBtnMobile: {
     background: 'none',
     border: `1px solid ${C.border}`,
@@ -618,7 +665,18 @@ const styles: Record<string, React.CSSProperties> = {
   empty: { textAlign: 'center', padding: '48px 24px', color: C.muted },
   emptyIcon: { fontSize: 52, marginBottom: 16, opacity: 0.5 },
   emptyTitle: { fontSize: 16, color: C.mutedLight, marginBottom: 8 },
-  emptyHint: { fontSize: 13, lineHeight: 1.7 },
+  emptyHint: { fontSize: 13, lineHeight: 1.7, marginBottom: 24 },
+  createFirstTopicBtn: {
+    background: C.accent,
+    border: 'none',
+    borderRadius: 20,
+    color: '#fff',
+    cursor: 'pointer',
+    fontSize: 14,
+    fontWeight: 600,
+    padding: '12px 24px',
+    boxShadow: '0 4px 20px var(--accent-shadow)',
+  },
   deckCard: {
     background: C.surface,
     border: `1px solid ${C.border}`,

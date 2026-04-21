@@ -350,9 +350,9 @@ button:active {
   opacity: 1;
   transform: scale(0.95);
 }
-/* On desktop, only shift right of the sidebar when the sidebar is actually rendered */
+/* On desktop with a sidebar, the toggle lives inside the sidebar — hide the fixed one */
 @media (min-width: 768px) {
   body:has(.app-sidebar) .theme-toggle {
-    left: 240px;
+    display: none;
   }
 }

@@ -540,6 +540,8 @@ export default function App() {
         onSettings={() => setScreen('settings')}
         onProgression={() => setScreen('progression')}
         onLogout={handleLogout}
+        theme={theme}
+        onToggleTheme={toggleTheme}
       />
       {themeToggle}
     </>
