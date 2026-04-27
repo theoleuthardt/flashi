@@ -288,6 +288,12 @@ export default function App() {
     mutate(next);
   }
 
+  function reorderTopics(newTopicIds: string[]) {
+    const topicMap = new Map(data.topics.map((t) => [t.id, t]));
+    const reordered = newTopicIds.map((id) => topicMap.get(id)!).filter(Boolean);
+    mutate({ ...data, topics: reordered });
+  }
+
   function reorderDecks(topicId: string, newDeckIds: string[]) {
     const topicDeckMap = new Map(data.decks.filter((d) => d.topicId === topicId).map((d) => [d.id, d]));
     const newTopicDecks = newDeckIds.map((id) => topicDeckMap.get(id)!).filter(Boolean);
@@ -548,6 +554,7 @@ export default function App() {
           setScreen('topic');
         }}
         onCreateTopic={createTopic}
+        onReorderTopics={reorderTopics}
         onAssignTopic={data.topics.length > 0 ? assignDeckToTopic : undefined}
         onAdmin={me?.isAdmin ? () => setScreen('admin') : undefined}
         onSettings={() => setScreen('settings')}
