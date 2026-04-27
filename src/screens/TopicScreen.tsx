@@ -2,14 +2,6 @@ import { useState, useRef, useEffect, Fragment } from 'react';
 import type { FlashiData, Topic, Quiz } from '../types';
 import { C } from '../theme';
 
-function TrashIcon() {
-  return (
-    <svg width="15" height="15" viewBox="0 0 15 15" fill="none" aria-hidden="true">
-      <path d="M1 4h13M5 4V2h5v2M2 4l1 9a2 2 0 002 2h5a2 2 0 002-2l1-9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-      <path d="M6 7v4M9 7v4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-    </svg>
-  );
-}
 
 interface Props {
   topic: Topic;
@@ -162,10 +154,10 @@ export default function TopicScreen({
           ))}
         </div>
         <button onClick={enterDeleteMode} style={styles.deleteItemsBtn}>
-          <TrashIcon /> Delete items
+          🗑️ Delete items
         </button>
         <button onClick={() => setConfirmTopic(true)} style={styles.deleteTopicBtn}>
-          <TrashIcon /> Delete topic
+          🗑️ Delete topic
         </button>
       </aside>
 
@@ -187,8 +179,11 @@ export default function TopicScreen({
           <button onClick={onToggleTheme} style={styles.mobileThemeBtn} title="Toggle theme">
             {theme === 'dark' ? '🌙' : '☀️'}
           </button>
-          <button onClick={() => setConfirmTopic(true)} style={styles.mobileDeleteTopicBtn}>
-            <TrashIcon />
+          <button onClick={enterDeleteMode} style={styles.mobileDeleteItemsBtn} title="Delete items">
+            ☑️
+          </button>
+          <button onClick={() => setConfirmTopic(true)} style={styles.mobileDeleteTopicBtn} title="Delete topic">
+            🗑️
           </button>
         </div>
 
@@ -437,7 +432,7 @@ export default function TopicScreen({
         <div style={styles.fabGroup}>
           {deleteMode && selectedCount > 0 && (
             <button onClick={() => setConfirmDelete(true)} style={styles.fabDeleteConfirm}>
-              <TrashIcon /> Delete {selectedCount} item{selectedCount !== 1 ? 's' : ''}
+              🗑️ Delete {selectedCount} item{selectedCount !== 1 ? 's' : ''}
             </button>
           )}
 
@@ -719,6 +714,15 @@ const styles: Record<string, React.CSSProperties> = {
     cursor: 'pointer',
     fontSize: 16,
     padding: '6px 10px',
+  },
+  mobileDeleteItemsBtn: {
+    background: 'var(--again-bg)',
+    border: `1px solid var(--again-border)`,
+    borderRadius: 10,
+    color: C.again,
+    cursor: 'pointer',
+    fontSize: 15,
+    padding: '6px 9px',
   },
   mobileDeleteTopicBtn: {
     background: C.again,
