@@ -40,7 +40,7 @@ const EXAMPLE = `{
     },
     {
       "question": "Identify this landmark",
-      "image": "https://example.com/kremlin.jpg",
+      "image": "https://thumbs.dreamstime.com/b/above-st-basil-cathedral-red-square-kremlin-panorama-moscow-russia-above-impressive-st-basil-cathedral-red-square-kremlin-266629583.jpg",
       "options": ["Kremlin", "Big Ben", "Eiffel Tower", "Colosseum"],
       "correct": 0
     }
