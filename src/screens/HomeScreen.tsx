@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import type { FlashiData, Topic } from '../types';
 import { C } from '../theme';
 
@@ -32,7 +32,6 @@ interface Props {
   data: FlashiData;
   dueCount: (deckId: string) => number;
   onStudy: (deckId: string) => void;
-  onImport: () => void;
   onDelete: (deckId: string) => void;
   onOpenTopic: (topicId: string) => void;
   onCreateTopic: (name: string) => void;
@@ -49,7 +48,6 @@ export default function HomeScreen({
   data,
   dueCount,
   onStudy,
-  onImport,
   onDelete,
   onOpenTopic,
   onCreateTopic,
@@ -67,6 +65,17 @@ export default function HomeScreen({
   const [showNewTopic, setShowNewTopic] = useState(false);
   const [dragOverTopicId, setDragOverTopicId] = useState<string | null>(null);
   const [draggingDeckId, setDraggingDeckId] = useState<string | null>(null);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const searchInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (searchOpen) searchInputRef.current?.focus();
+    else setSearchQuery('');
+  }, [searchOpen]);
+
+  const sq = searchQuery.toLowerCase().trim();
+  const filteredTopics = sq ? data.topics.filter((t) => t.name.toLowerCase().includes(sq)) : data.topics;
 
   const totalDue = data.decks.reduce((s, d) => s + dueCount(d.id), 0);
   const totalCards = data.decks.reduce((s, d) => s + (data.cards[d.id]?.length ?? 0), 0);
@@ -211,7 +220,7 @@ export default function HomeScreen({
               )}
 
               <div className="topic-grid">
-                {data.topics.map((t) => {
+                {filteredTopics.map((t) => {
                   const due = topicDue(t);
                   const cards = topicCards(t);
                   const deckCount = topicDeckCount(t);
@@ -418,9 +427,36 @@ export default function HomeScreen({
         )}
 
         {data.topics.length > 0 && (
-          <button onClick={() => setShowNewTopic(true)} style={styles.fab}>
-            + New topic
-          </button>
+          <div style={styles.fabRow}>
+            <div style={styles.fabSearchWrapper}>
+              {searchOpen && (
+                <input
+                  ref={searchInputRef}
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === 'Escape') setSearchOpen(false); }}
+                  placeholder="Search topics…"
+                  style={styles.searchInput}
+                />
+              )}
+              <button
+                onClick={() => setSearchOpen((o) => !o)}
+                style={{
+                  ...styles.fabSearch,
+                  background: searchOpen ? C.accent : C.surface2,
+                  color: searchOpen ? '#fff' : C.mutedLight,
+                  boxShadow: searchOpen ? `0 0 0 2px ${C.accent}, 0 4px 20px var(--accent-shadow-sm)` : '0 2px 12px rgba(0,0,0,0.3)',
+                }}
+                aria-label="Search topics"
+                title="Search topics"
+              >
+                🔍
+              </button>
+            </div>
+            <button onClick={() => setShowNewTopic(true)} style={styles.fab}>
+              + New topic
+            </button>
+          </div>
         )}
       </div>
     </div>
@@ -815,10 +851,47 @@ const styles: Record<string, React.CSSProperties> = {
     fontSize: 14,
     fontWeight: 500,
   },
-  fab: {
+  fabRow: {
     position: 'fixed',
     bottom: 28,
     right: 20,
+    display: 'flex',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    zIndex: 100,
+  },
+  fabSearchWrapper: {
+    display: 'flex',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  searchInput: {
+    background: C.surface2,
+    border: `1px solid ${C.border}`,
+    borderRadius: 14,
+    color: C.text,
+    fontSize: 13,
+    padding: '13px 16px',
+    width: 180,
+    outline: 'none',
+    boxShadow: '0 2px 12px rgba(0,0,0,0.25)',
+  },
+  fabSearch: {
+    borderRadius: '50%',
+    width: 52,
+    height: 52,
+    border: `1px solid ${C.border}`,
+    fontSize: 20,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    cursor: 'pointer',
+    transition: 'background 0.2s, box-shadow 0.2s',
+    flexShrink: 0,
+  } as React.CSSProperties,
+  fab: {
     background: C.accent,
     color: '#fff',
     border: 'none',
@@ -828,5 +901,6 @@ const styles: Record<string, React.CSSProperties> = {
     fontWeight: 600,
     cursor: 'pointer',
     boxShadow: '0 6px 28px var(--accent-shadow)',
+    whiteSpace: 'nowrap',
   },
 };
