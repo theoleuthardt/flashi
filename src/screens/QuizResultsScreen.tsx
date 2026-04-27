@@ -8,11 +8,24 @@ interface Props {
   onRetry: () => void;
 }
 
+function correctIndices(correct: number | number[]): number[] {
+  return Array.isArray(correct) ? correct : [correct];
+}
+
+function isAnswerCorrect(selected: number[], correct: number | number[]): boolean {
+  const ci = correctIndices(correct);
+  return selected.length === ci.length && ci.every((c) => selected.includes(c));
+}
+
+function optText(opt: import('../types').QuizOption): string {
+  return Array.isArray(opt) ? opt[0] : opt;
+}
+
 export default function QuizResultsScreen({ quiz, answers, onBack, onRetry }: Props) {
   const total = answers.length;
-  const correct = answers.filter((a) => a.selected === a.correct).length;
+  const correct = answers.filter((a) => isAnswerCorrect(a.selected, a.correct)).length;
   const pct = total > 0 ? Math.round((correct / total) * 100) : 0;
-  const faults = answers.filter((a) => a.selected !== a.correct);
+  const faults = answers.filter((a) => !isAnswerCorrect(a.selected, a.correct));
 
   const scoreColor = pct >= 80 ? C.good : pct >= 50 ? C.hard : C.again;
 
@@ -49,17 +62,22 @@ export default function QuizResultsScreen({ quiz, answers, onBack, onRetry }: Pr
             <h3 style={styles.sectionTitle}>Review — {faults.length} wrong</h3>
             {faults.map((a) => {
               const q = quiz.questions[a.questionIndex];
+              const ci = correctIndices(q.correct);
               return (
                 <div key={a.questionIndex} style={styles.faultCard}>
                   <p style={styles.faultQuestion}>{q.question}</p>
                   <div style={styles.faultRow}>
                     <div style={styles.faultWrong}>
                       <span style={styles.faultBadge}>✗</span>
-                      <span style={styles.faultText}>{q.options[a.selected]}</span>
+                      <span style={styles.faultText}>
+                        {a.selected.map((i) => optText(q.options[i])).join(', ')}
+                      </span>
                     </div>
                     <div style={styles.faultCorrect}>
                       <span style={styles.faultBadge}>✓</span>
-                      <span style={styles.faultText}>{q.options[a.correct]}</span>
+                      <span style={styles.faultText}>
+                        {ci.map((i) => optText(q.options[i])).join(', ')}
+                      </span>
                     </div>
                   </div>
                 </div>
