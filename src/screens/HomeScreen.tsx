@@ -254,7 +254,11 @@ export default function HomeScreen({
                   return (
                     <Fragment key={t.id}>
                       {isTopicDropTarget && (
-                        <div style={styles.topicDropSlot} />
+                        <div
+                          style={styles.topicDropSlot}
+                          onDragOver={(e) => { e.preventDefault(); setDropTopicIdx(tIdx); }}
+                          onDrop={(e) => { e.preventDefault(); handleTopicDrop(); }}
+                        />
                       )}
                       <button
                         className="topic-island"
