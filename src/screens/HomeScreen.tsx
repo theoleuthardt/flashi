@@ -188,6 +188,9 @@ export default function HomeScreen({
                 👥
               </button>
             )}
+            <button onClick={onToggleTheme} style={styles.adminBtnMobile} title="Toggle theme">
+              {theme === 'dark' ? '🌙' : '☀️'}
+            </button>
             <button onClick={onProgression} style={styles.adminBtnMobile} title="Progression">
               <ProgressionIcon />
             </button>

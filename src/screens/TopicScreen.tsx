@@ -184,6 +184,9 @@ export default function TopicScreen({
             ← Back
           </button>
           <h2 style={styles.mobileTopicName}>{topic.name}</h2>
+          <button onClick={onToggleTheme} style={styles.mobileThemeBtn} title="Toggle theme">
+            {theme === 'dark' ? '🌙' : '☀️'}
+          </button>
           <button onClick={() => setConfirmTopic(true)} style={styles.mobileDeleteTopicBtn}>
             <TrashIcon />
           </button>
@@ -707,6 +710,15 @@ const styles: Record<string, React.CSSProperties> = {
     color: C.text,
     fontSize: 17,
     fontWeight: 600,
+  },
+  mobileThemeBtn: {
+    background: 'none',
+    border: `1px solid ${C.border}`,
+    borderRadius: 10,
+    color: C.muted,
+    cursor: 'pointer',
+    fontSize: 16,
+    padding: '6px 10px',
   },
   mobileDeleteTopicBtn: {
     background: C.again,

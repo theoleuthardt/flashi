@@ -386,3 +386,9 @@ button:active {
     display: none;
   }
 }
+/* On mobile with app-layout, the toggle lives in the mobile header — hide the fixed one */
+@media (max-width: 767px) {
+  body:has(.app-layout) .theme-toggle {
+    display: none;
+  }
+}
