@@ -274,10 +274,6 @@ export default function App() {
     mutate({ ...data, quizzes: [...(data.quizzes ?? []), ...newQuizzes] });
   }
 
-  function deleteQuiz(quizId: string) {
-    mutate({ ...data, quizzes: (data.quizzes ?? []).filter((q) => q.id !== quizId) });
-  }
-
   function deleteBatch(deckIds: string[], quizIds: string[]) {
     let next = data;
     const nc = { ...next.cards };
@@ -290,6 +286,20 @@ export default function App() {
       next = { ...next, quizzes: (next.quizzes ?? []).filter((q) => !quizSet.has(q.id)) };
     }
     mutate(next);
+  }
+
+  function reorderDecks(topicId: string, newDeckIds: string[]) {
+    const topicDeckMap = new Map(data.decks.filter((d) => d.topicId === topicId).map((d) => [d.id, d]));
+    const newTopicDecks = newDeckIds.map((id) => topicDeckMap.get(id)!).filter(Boolean);
+    const otherDecks = data.decks.filter((d) => d.topicId !== topicId);
+    mutate({ ...data, decks: [...otherDecks, ...newTopicDecks] });
+  }
+
+  function reorderQuizzes(topicId: string, newQuizIds: string[]) {
+    const topicQuizMap = new Map((data.quizzes ?? []).filter((q) => q.topicId === topicId).map((q) => [q.id, q]));
+    const newTopicQuizzes = newQuizIds.map((id) => topicQuizMap.get(id)!).filter(Boolean);
+    const otherQuizzes = (data.quizzes ?? []).filter((q) => q.topicId !== topicId);
+    mutate({ ...data, quizzes: [...otherQuizzes, ...newTopicQuizzes] });
   }
 
   function deleteTopic(topicId: string) {
@@ -450,7 +460,11 @@ export default function App() {
           quiz={quiz}
           onDone={(answers) => {
             if (!mixQuiz && activeQuizId) {
-              const correct = answers.filter((a) => a.selected === a.correct).length;
+              function isCorrect(a: QuizAnswer): boolean {
+                const ci = Array.isArray(a.correct) ? a.correct : [a.correct];
+                return a.selected.length === ci.length && ci.every((c) => a.selected.includes(c));
+              }
+              const correct = answers.filter(isCorrect).length;
               const result: QuizResult = { date: todayStr(), correct, total: answers.length };
               const updatedQuizzes = (data.quizzes ?? []).map((q) =>
                 q.id === activeQuizId ? { ...q, results: [...(q.results ?? []), result] } : q
@@ -497,7 +511,6 @@ export default function App() {
           data={data}
           dueCount={dueCount}
           onStudy={(deckId) => startStudy(deckId)}
-          onDelete={deleteDeck}
           onDeleteTopic={(topicId) => {
             deleteTopic(topicId);
             setTopicFaults((prev) => { const n = { ...prev }; delete n[topicId]; return n; });
@@ -507,8 +520,9 @@ export default function App() {
           onCreateDeck={() => setScreen('import')}
           onCreateQuiz={() => setScreen('quiz-import')}
           onStartQuiz={(quizId) => { setActiveQuizId(quizId); setQuizAnswers([]); setScreen('quiz'); }}
-          onDeleteQuiz={deleteQuiz}
           onDeleteBatch={deleteBatch}
+          onReorderDecks={reorderDecks}
+          onReorderQuizzes={reorderQuizzes}
           onDailyMix={() => startDailyMix(activeTopicId)}
           onDailyQuizMix={() => startDailyQuizMix(activeTopicId)}
           faultCount={faultCount}
@@ -528,7 +542,6 @@ export default function App() {
         data={data}
         dueCount={dueCount}
         onStudy={startStudy}
-        onImport={() => setScreen('import')}
         onDelete={deleteDeck}
         onOpenTopic={(topicId) => {
           setActiveTopicId(topicId);
