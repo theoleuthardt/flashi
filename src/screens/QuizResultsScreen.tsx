@@ -89,6 +89,7 @@ interface Props {
   answers: QuizAnswer[];
   onBack: () => void;
   onRetry: () => void;
+  onReviewFault: (questionIndex: number) => void;
 }
 
 function correctIndices(correct: number | number[]): number[] {
@@ -104,7 +105,7 @@ function optText(opt: import('../types').QuizOption): string {
   return Array.isArray(opt) ? opt[0] : opt;
 }
 
-export default function QuizResultsScreen({ quiz, answers, onBack, onRetry }: Props) {
+export default function QuizResultsScreen({ quiz, answers, onBack, onRetry, onReviewFault }: Props) {
   const total = answers.length;
   const correct = answers.filter((a) => isAnswerCorrect(a.selected, a.correct)).length;
   const pct = total > 0 ? Math.round((correct / total) * 100) : 0;
@@ -150,7 +151,16 @@ export default function QuizResultsScreen({ quiz, answers, onBack, onRetry }: Pr
               const ci = correctIndices(q.correct);
               return (
                 <div key={a.questionIndex} style={styles.faultCard}>
-                  <p style={styles.faultQuestion}>{q.question}</p>
+                  <div style={styles.faultHeader}>
+                    <p style={styles.faultQuestion}>{q.question}</p>
+                    <button
+                      onClick={() => onReviewFault(a.questionIndex)}
+                      style={styles.reviewBtn}
+                      title="Go back to this question"
+                    >
+                      Review →
+                    </button>
+                  </div>
                   <div style={styles.faultRow}>
                     <div style={styles.faultWrong}>
                       <span style={styles.faultBadge}>✗</span>
@@ -268,7 +278,20 @@ const styles: Record<string, React.CSSProperties> = {
     flexDirection: 'column',
     gap: 8,
   },
-  faultQuestion: { color: C.text, fontSize: 13, fontWeight: 500 },
+  faultHeader: { display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 10 },
+  faultQuestion: { color: C.text, fontSize: 13, fontWeight: 500, flex: 1 },
+  reviewBtn: {
+    flexShrink: 0,
+    background: 'none',
+    border: `1px solid ${C.border}`,
+    borderRadius: 8,
+    color: C.accent,
+    fontSize: 11,
+    fontWeight: 600,
+    padding: '4px 10px',
+    cursor: 'pointer',
+    whiteSpace: 'nowrap' as const,
+  },
   faultRow: { display: 'flex', flexDirection: 'column', gap: 6 },
   faultWrong: {
     display: 'flex',

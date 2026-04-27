@@ -490,6 +490,17 @@ export default function App() {
   if (screen === 'quiz-results' && activeQuizId) {
     const quiz = mixQuiz ?? (data.quizzes ?? []).find((q) => q.id === activeQuizId);
     if (!quiz) { setScreen('topic'); return null; }
+
+    function handleReviewFault(questionIndex: number) {
+      const answersRecord: Record<number, number[]> = {};
+      for (const a of quizAnswers) answersRecord[a.questionIndex] = a.selected;
+      localStorage.setItem(`flashi-quiz-progress-${quiz!.id}`, JSON.stringify({
+        currentIndex: questionIndex,
+        answers: answersRecord,
+      }));
+      setScreen('quiz');
+    }
+
     return (
       <>
         <QuizResultsScreen
@@ -497,6 +508,7 @@ export default function App() {
           answers={quizAnswers}
           onBack={() => { setMixQuiz(null); setScreen(activeTopicId ? 'topic' : 'home'); }}
           onRetry={() => { setQuizAnswers([]); setScreen('quiz'); }}
+          onReviewFault={handleReviewFault}
         />
         {themeToggle}
       </>
