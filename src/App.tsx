@@ -317,6 +317,7 @@ export default function App() {
       topics: data.topics.filter((t) => t.id !== topicId),
       decks: data.decks.filter((d) => d.topicId !== topicId),
       cards: nc,
+      quizzes: (data.quizzes ?? []).filter((q) => q.topicId !== topicId),
     });
   }
 
