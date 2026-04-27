@@ -180,7 +180,7 @@ export default function TopicScreen({
             {theme === 'dark' ? '🌙' : '☀️'}
           </button>
           <button onClick={enterDeleteMode} style={styles.mobileDeleteItemsBtn} title="Delete items">
-            ☑️
+            ✂️
           </button>
           <button onClick={() => setConfirmTopic(true)} style={styles.mobileDeleteTopicBtn} title="Delete topic">
             🗑️
