@@ -127,6 +127,7 @@ export default function StudyScreen({
               }}
             >
               <div style={styles.sideLabel}>Back</div>
+              <div style={styles.cardMeta}>{card.reps} reps · interval: {card.interval}d</div>
               <div style={styles.cardScrollArea}>
                 <div style={{ ...styles.cardText, fontSize: 22 }}>{card.back}</div>
               </div>
@@ -138,9 +139,6 @@ export default function StudyScreen({
                 <SpeakerIcon />
               </button>
               <div style={styles.tapHint}>Tap to flip back</div>
-              <div style={styles.cardMeta}>
-                {card.reps} reps · interval: {card.interval}d
-              </div>
             </div>
           </div>
         </div>
@@ -280,7 +278,7 @@ const styles: Record<string, React.CSSProperties> = {
     lineHeight: 1.5,
   },
   tapHint: { position: 'absolute', bottom: 14, color: C.mutedLight, fontSize: 11 },
-  cardMeta: { position: 'absolute', top: 14, color: C.mutedLight, fontSize: 10 },
+  cardMeta: { color: C.muted, fontSize: 10, marginBottom: 8, flexShrink: 0 },
   speakBtn: {
     position: 'absolute',
     bottom: 14,
