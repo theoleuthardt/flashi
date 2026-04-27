@@ -2,31 +2,6 @@ import { useState, useRef, useEffect, Fragment } from 'react';
 import type { FlashiData, Topic } from '../types';
 import { C } from '../theme';
 
-function TrashIcon() {
-  return (
-    <svg width="15" height="15" viewBox="0 0 15 15" fill="none" aria-hidden="true">
-      <path d="M1 4h13M5 4V2h5v2M2 4l1 9a2 2 0 002 2h5a2 2 0 002-2l1-9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-      <path d="M6 7v4M9 7v4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-    </svg>
-  );
-}
-
-function GearIcon() {
-  return (
-    <svg width="15" height="15" viewBox="0 0 15 15" fill="none" aria-hidden="true">
-      <path d="M7.5 9.5a2 2 0 100-4 2 2 0 000 4z" stroke="currentColor" strokeWidth="1.4"/>
-      <path d="M6.1 1.5l-.4 1.2a5 5 0 00-1.1.65L3.4 3l-1.4 2.4.9.9a5.1 5.1 0 000 1.4l-.9.9L3.4 11l1.2-.35a5 5 0 001.1.65l.4 1.2h2.8l.4-1.2a5 5 0 001.1-.65L11.6 11 13 8.6l-.9-.9a5.1 5.1 0 000-1.4l.9-.9L11.6 3l-1.2.35a5 5 0 00-1.1-.65L8.9 1.5H6.1z" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round"/>
-    </svg>
-  );
-}
-
-function ProgressionIcon() {
-  return (
-    <svg width="15" height="15" viewBox="0 0 15 15" fill="none" aria-hidden="true">
-      <path d="M1 12l3.5-4 3 2.5 3-5.5 3 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-    </svg>
-  );
-}
 
 interface Props {
   data: FlashiData;
@@ -148,10 +123,10 @@ export default function HomeScreen({
             </button>
           )}
           <button onClick={onProgression} className="sidebar-btn" style={styles.adminBtn}>
-            <ProgressionIcon /> Progression
+            📊 Progression
           </button>
           <button onClick={onSettings} className="sidebar-btn" style={styles.adminBtn}>
-            <GearIcon /> Settings
+            ⚙️ Settings
           </button>
           <div style={styles.logoutRow}>
             <button onClick={onLogout} className="sidebar-btn" style={styles.logoutBtn}>
@@ -192,10 +167,10 @@ export default function HomeScreen({
               {theme === 'dark' ? '🌙' : '☀️'}
             </button>
             <button onClick={onProgression} style={styles.adminBtnMobile} title="Progression">
-              <ProgressionIcon />
+              📊
             </button>
             <button onClick={onSettings} style={styles.adminBtnMobile} title="Settings">
-              <GearIcon />
+              ⚙️
             </button>
             <button onClick={onLogout} style={styles.logoutBtnMobile}>
               ↩
@@ -405,7 +380,7 @@ export default function HomeScreen({
                       style={styles.deleteBtn}
                       aria-label="Delete"
                     >
-                      <TrashIcon />
+                      🗑️
                     </button>
                     <button
                       onClick={() => onStudy(deck.id)}
