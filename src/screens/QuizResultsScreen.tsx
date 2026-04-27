@@ -1,5 +1,88 @@
+import { useEffect, useRef } from 'react';
 import type { Quiz, QuizAnswer } from '../types';
 import { C } from '../theme';
+
+const CONFETTI_COLORS = ['#6C63FF', '#FF6584', '#43D9AD', '#FFD166', '#EF476F', '#06D6A0', '#118AB2'];
+
+function useConfetti(active: boolean) {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+
+  useEffect(() => {
+    if (!active) return;
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    interface Particle {
+      x: number; y: number; vx: number; vy: number;
+      color: string; w: number; h: number; angle: number; spin: number; gravity: number;
+    }
+
+    function burst(originX: number): Particle[] {
+      return Array.from({ length: 60 }, () => {
+        const angle = -Math.PI / 2 + (Math.random() - 0.5) * Math.PI * 0.9;
+        const speed = 10 + Math.random() * 14;
+        return {
+          x: originX, y: canvas!.height + 10,
+          vx: Math.cos(angle) * speed,
+          vy: Math.sin(angle) * speed,
+          color: CONFETTI_COLORS[Math.floor(Math.random() * CONFETTI_COLORS.length)],
+          w: 8 + Math.random() * 8,
+          h: 4 + Math.random() * 4,
+          angle: Math.random() * Math.PI * 2,
+          spin: (Math.random() - 0.5) * 0.3,
+          gravity: 0.35 + Math.random() * 0.15,
+        };
+      });
+    }
+
+    let particles: Particle[] = [
+      ...burst(canvas.width * 0.25),
+      ...burst(canvas.width * 0.75),
+    ];
+    let frame = 0;
+    let rafId: number;
+
+    // Second volley after 600ms
+    const timer = setTimeout(() => {
+      particles.push(...burst(canvas.width * 0.5));
+    }, 600);
+
+    function draw() {
+      ctx!.clearRect(0, 0, canvas!.width, canvas!.height);
+      particles.forEach((p) => {
+        p.x += p.vx;
+        p.y += p.vy;
+        p.vy += p.gravity;
+        p.vx *= 0.99;
+        p.angle += p.spin;
+        ctx!.save();
+        ctx!.translate(p.x, p.y);
+        ctx!.rotate(p.angle);
+        ctx!.fillStyle = p.color;
+        ctx!.globalAlpha = Math.max(0, 1 - frame / 160);
+        ctx!.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
+        ctx!.restore();
+      });
+      frame++;
+      if (frame < 180) rafId = requestAnimationFrame(draw);
+      else ctx!.clearRect(0, 0, canvas!.width, canvas!.height);
+    }
+
+    rafId = requestAnimationFrame(draw);
+    return () => {
+      cancelAnimationFrame(rafId);
+      clearTimeout(timer);
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+    };
+  }, [active]);
+
+  return canvasRef;
+}
 
 interface Props {
   quiz: Quiz;
@@ -28,9 +111,11 @@ export default function QuizResultsScreen({ quiz, answers, onBack, onRetry }: Pr
   const faults = answers.filter((a) => !isAnswerCorrect(a.selected, a.correct));
 
   const scoreColor = pct >= 80 ? C.good : pct >= 50 ? C.hard : C.again;
+  const canvasRef = useConfetti(pct === 100);
 
   return (
     <div style={styles.wrapper}>
+      <canvas ref={canvasRef} style={styles.confettiCanvas} />
       <div style={styles.header}>
         <button onClick={onBack} style={styles.backBtn}>← Back</button>
         <h2 style={styles.heading}>{quiz.name}</h2>
@@ -96,6 +181,9 @@ export default function QuizResultsScreen({ quiz, answers, onBack, onRetry }: Pr
 }
 
 const styles: Record<string, React.CSSProperties> = {
+  confettiCanvas: {
+    position: 'fixed', inset: 0, pointerEvents: 'none', zIndex: 999,
+  },
   wrapper: { minHeight: '100dvh', background: C.bg, display: 'flex', flexDirection: 'column' },
   header: {
     padding: '16px 20px',
