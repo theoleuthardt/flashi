@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import type { FlashiData, Topic, Quiz } from '../types';
 import { C } from '../theme';
 
@@ -16,13 +16,13 @@ interface Props {
   data: FlashiData;
   dueCount: (deckId: string) => number;
   onStudy: (deckId: string) => void;
-  onDelete: (deckId: string) => void;
   onDeleteTopic: (topicId: string) => void;
   onCreateDeck: () => void;
   onCreateQuiz: () => void;
   onStartQuiz: (quizId: string) => void;
-  onDeleteQuiz: (quizId: string) => void;
   onDeleteBatch: (deckIds: string[], quizIds: string[]) => void;
+  onReorderDecks: (topicId: string, deckIds: string[]) => void;
+  onReorderQuizzes: (topicId: string, quizIds: string[]) => void;
   onDailyMix: () => void;
   onDailyQuizMix: () => void;
   faultCount: number;
@@ -37,13 +37,13 @@ export default function TopicScreen({
   data,
   dueCount,
   onStudy,
-  onDelete,
   onDeleteTopic,
   onCreateDeck,
   onCreateQuiz,
   onStartQuiz,
-  onDeleteQuiz,
   onDeleteBatch,
+  onReorderDecks,
+  onReorderQuizzes,
   onDailyMix,
   onDailyQuizMix,
   faultCount,
@@ -58,12 +58,27 @@ export default function TopicScreen({
   const [deleteMode, setDeleteMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [dragDeckIdx, setDragDeckIdx] = useState<number | null>(null);
+  const [dropDeckIdx, setDropDeckIdx] = useState<number | null>(null);
+  const [dragQuizIdx, setDragQuizIdx] = useState<number | null>(null);
+  const [dropQuizIdx, setDropQuizIdx] = useState<number | null>(null);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const searchInputRef = useRef<HTMLInputElement>(null);
 
-  const decks = data.decks.filter((d) => d.topicId === topic.id);
-  const quizzes: Quiz[] = (data.quizzes ?? []).filter((q) => q.topicId === topic.id);
-  const totalCards = decks.reduce((s, d) => s + (data.cards[d.id]?.length ?? 0), 0);
-  const totalDue = decks.reduce((s, d) => s + dueCount(d.id), 0);
-  const totalQuestions = quizzes.reduce((s, q) => s + q.questions.length, 0);
+  useEffect(() => {
+    if (searchOpen) searchInputRef.current?.focus();
+    else setSearchQuery('');
+  }, [searchOpen]);
+
+  const allDecks = data.decks.filter((d) => d.topicId === topic.id);
+  const allQuizzes: Quiz[] = (data.quizzes ?? []).filter((q) => q.topicId === topic.id);
+  const q = searchQuery.toLowerCase().trim();
+  const decks = q ? allDecks.filter((d) => d.name.toLowerCase().includes(q)) : allDecks;
+  const quizzes = q ? allQuizzes.filter((qz) => qz.name.toLowerCase().includes(q)) : allQuizzes;
+  const totalCards = allDecks.reduce((s, d) => s + (data.cards[d.id]?.length ?? 0), 0);
+  const totalDue = allDecks.reduce((s, d) => s + dueCount(d.id), 0);
+  const totalQuestions = allQuizzes.reduce((s, qz) => s + qz.questions.length, 0);
 
   function quizStatus(quiz: Quiz): { label: string; color: string } {
     const results = quiz.results ?? [];
@@ -184,7 +199,7 @@ export default function TopicScreen({
         )}
 
         <div style={styles.list}>
-          {decks.length === 0 && quizzes.length === 0 && (
+          {allDecks.length === 0 && allQuizzes.length === 0 && (
             <div style={styles.emptyFull}>
               <div style={styles.emptyIcon}>📂</div>
               <p style={styles.emptyTitle}>Nothing here yet</p>
@@ -193,7 +208,12 @@ export default function TopicScreen({
               </p>
             </div>
           )}
-          {(decks.length > 0 || quizzes.length > 0) && (
+          {(allDecks.length > 0 || allQuizzes.length > 0) && searchQuery && decks.length === 0 && quizzes.length === 0 && (
+            <div style={styles.empty}>
+              <p style={styles.emptyTitle}>No results for &ldquo;{searchQuery}&rdquo;</p>
+            </div>
+          )}
+          {(allDecks.length > 0 || allQuizzes.length > 0) && (
             <div className="topic-lists-grid">
               <div style={styles.listsColumn}>
                 <p style={styles.deckSectionTitle}>Flashcards</p>
@@ -207,12 +227,14 @@ export default function TopicScreen({
                   </div>
                 )}
 
-                {decks.map((deck) => {
+                {decks.map((deck, deckIdx) => {
                   const due = dueCount(deck.id);
                   const total = data.cards[deck.id]?.length ?? 0;
                   const allDone = due === 0;
                   const selKey = `deck:${deck.id}`;
                   const isSelected = selectedIds.has(selKey);
+                  const isDragging = dragDeckIdx === deckIdx;
+                  const isDropTarget = dropDeckIdx === deckIdx && dragDeckIdx !== deckIdx;
 
                   function handleClick() {
                     if (deleteMode) {
@@ -232,13 +254,35 @@ export default function TopicScreen({
                     <button
                       key={deck.id}
                       className={classNames}
+                      draggable={!deleteMode}
+                      onDragStart={() => { setDragDeckIdx(deckIdx); setDropDeckIdx(deckIdx); }}
+                      onDragOver={(e) => { e.preventDefault(); setDropDeckIdx(deckIdx); }}
+                      onDragLeave={() => setDropDeckIdx(null)}
+                      onDrop={() => {
+                        if (dragDeckIdx !== null && dragDeckIdx !== deckIdx) {
+                          const reordered = [...decks];
+                          const [item] = reordered.splice(dragDeckIdx, 1);
+                          reordered.splice(deckIdx, 0, item);
+                          onReorderDecks(topic.id, reordered.map((d) => d.id));
+                        }
+                        setDragDeckIdx(null);
+                        setDropDeckIdx(null);
+                      }}
+                      onDragEnd={() => { setDragDeckIdx(null); setDropDeckIdx(null); }}
                       style={{
                         ...styles.deckCard,
                         cursor: deleteMode ? 'pointer' : allDone ? 'default' : 'pointer',
+                        opacity: isDragging ? 0.4 : 1,
+                        border: isDropTarget ? `2px solid ${C.accent}` : 'none',
+                        transform: isDropTarget ? 'scale(1.01)' : undefined,
+                        transition: 'transform 0.1s, opacity 0.1s',
                       }}
                       onClick={handleClick}
                       disabled={!deleteMode && allDone}
                     >
+                      {!deleteMode && decks.length > 1 && (
+                        <span style={styles.dragHandle}>⠿</span>
+                      )}
                       <div style={styles.deckInfo}>
                         <div style={styles.deckName}>{deck.name}</div>
                         <div style={styles.deckMeta}>
@@ -271,10 +315,12 @@ export default function TopicScreen({
                 {quizzes.length > 0 && (
                   <div>
                     <p style={styles.quizSectionTitle}>Quizzes</p>
-                    {quizzes.map((quiz) => {
+                    {quizzes.map((quiz, quizIdx) => {
                       const status = quizStatus(quiz);
                       const selKey = `quiz:${quiz.id}`;
                       const isSelected = selectedIds.has(selKey);
+                      const isDragging = dragQuizIdx === quizIdx;
+                      const isDropTarget = dropQuizIdx === quizIdx && dragQuizIdx !== quizIdx;
 
                       function handleClick() {
                         if (deleteMode) {
@@ -293,9 +339,33 @@ export default function TopicScreen({
                         <button
                           key={quiz.id}
                           className={classNames}
-                          style={styles.quizCard}
+                          draggable={!deleteMode}
+                          onDragStart={() => { setDragQuizIdx(quizIdx); setDropQuizIdx(quizIdx); }}
+                          onDragOver={(e) => { e.preventDefault(); setDropQuizIdx(quizIdx); }}
+                          onDragLeave={() => setDropQuizIdx(null)}
+                          onDrop={() => {
+                            if (dragQuizIdx !== null && dragQuizIdx !== quizIdx) {
+                              const reordered = [...quizzes];
+                              const [item] = reordered.splice(dragQuizIdx, 1);
+                              reordered.splice(quizIdx, 0, item);
+                              onReorderQuizzes(topic.id, reordered.map((q) => q.id));
+                            }
+                            setDragQuizIdx(null);
+                            setDropQuizIdx(null);
+                          }}
+                          onDragEnd={() => { setDragQuizIdx(null); setDropQuizIdx(null); }}
+                          style={{
+                            ...styles.quizCard,
+                            opacity: isDragging ? 0.4 : 1,
+                            border: isDropTarget ? `2px solid ${C.accent}` : 'none',
+                            transform: isDropTarget ? 'scale(1.01)' : undefined,
+                            transition: 'transform 0.1s, opacity 0.1s',
+                          }}
                           onClick={handleClick}
                         >
+                          {!deleteMode && quizzes.length > 1 && (
+                            <span style={styles.dragHandle}>⠿</span>
+                          )}
                           <div style={styles.quizInfo}>
                             <div style={styles.quizName}>{quiz.name}</div>
                             <div style={styles.quizMeta}>
@@ -329,11 +399,38 @@ export default function TopicScreen({
           )}
 
           <div style={styles.fabRow}>
-            {(totalCards > 0 || quizzes.length > 0) && (
+            {(allDecks.length > 0 || allQuizzes.length > 0) && (
+              <div style={styles.fabSearchWrapper}>
+                {searchOpen && (
+                  <input
+                    ref={searchInputRef}
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    onKeyDown={(e) => { if (e.key === 'Escape') setSearchOpen(false); }}
+                    placeholder="Search decks & quizzes…"
+                    style={styles.searchInput}
+                  />
+                )}
+                <button
+                  onClick={() => { setSearchOpen((o) => !o); setFabOpen(false); setMixOpen(false); }}
+                  style={{
+                    ...styles.fabSearch,
+                    boxShadow: searchOpen ? `0 0 0 2px ${C.accent}, 0 4px 20px var(--accent-shadow-sm)` : undefined,
+                    background: searchOpen ? C.accent : C.surface2,
+                    color: searchOpen ? '#fff' : C.mutedLight,
+                  }}
+                  aria-label={searchOpen ? 'Close search' : 'Search'}
+                  title="Search"
+                >
+                  🔍
+                </button>
+              </div>
+            )}
+            {(totalCards > 0 || allQuizzes.length > 0) && (
               <div style={styles.fabCol}>
                 {mixOpen && (
                   <div style={styles.fabMenuFloating}>
-                    {quizzes.length > 0 && (
+                    {allQuizzes.length > 0 && (
                       <button onClick={() => { onDailyQuizMix(); setMixOpen(false); }} style={styles.fabMenuItem}>
                         🎯 Daily quiz mix
                       </button>
@@ -674,6 +771,14 @@ const styles: Record<string, React.CSSProperties> = {
     whiteSpace: 'nowrap',
   },
   quizMeta: { color: C.muted, fontSize: 12 },
+  dragHandle: {
+    color: C.muted,
+    fontSize: 16,
+    cursor: 'grab',
+    flexShrink: 0,
+    marginRight: 4,
+    userSelect: 'none',
+  } as React.CSSProperties,
   selectCheckmark: {
     flexShrink: 0,
     width: 24,
@@ -781,6 +886,37 @@ const styles: Record<string, React.CSSProperties> = {
     cursor: 'pointer',
     boxShadow: '0 2px 12px rgba(0,0,0,0.3)',
     transition: 'box-shadow 0.2s',
+  },
+  fabSearchWrapper: {
+    display: 'flex',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  searchInput: {
+    background: C.surface2,
+    border: `1px solid ${C.border}`,
+    borderRadius: 14,
+    color: C.text,
+    fontSize: 13,
+    padding: '13px 16px',
+    width: 200,
+    outline: 'none',
+    boxShadow: '0 2px 12px rgba(0,0,0,0.25)',
+  },
+  fabSearch: {
+    borderRadius: '50%',
+    width: 52,
+    height: 52,
+    border: `1px solid ${C.border}`,
+    fontSize: 20,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    cursor: 'pointer',
+    boxShadow: '0 2px 12px rgba(0,0,0,0.3)',
+    transition: 'background 0.2s, box-shadow 0.2s',
+    flexShrink: 0,
   },
   fabDeleteConfirm: {
     background: C.again,
