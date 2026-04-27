@@ -33,8 +33,9 @@ export type QuizOption = string | [string, string];
 
 export interface QuizQuestion {
   question: string;
-  options: QuizOption[]; // 2–6 choices
-  correct: number;       // 0-based index of the correct option
+  options: QuizOption[];   // 2–6 choices
+  correct: number | number[]; // single index or array of correct indices
+  image?: string;          // optional image URL or base64
 }
 
 export interface QuizResult {
@@ -54,8 +55,8 @@ export interface Quiz {
 
 export interface QuizAnswer {
   questionIndex: number;
-  selected: number; // -1 = not answered
-  correct: number;
+  selected: number[];     // selected option indices
+  correct: number | number[];
 }
 
 export type Rating = 0 | 1 | 2 | 3; // again, hard, good, easy

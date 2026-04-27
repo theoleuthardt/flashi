@@ -10,7 +10,7 @@ interface Props {
 
 interface SavedProgress {
   currentIndex: number;
-  answers: QuizAnswer[];
+  answers: Record<number, number[]>;
 }
 
 function progressKey(quizId: string) {
@@ -24,6 +24,11 @@ function optExplanation(opt: import('../types').QuizOption): string | undefined 
   return Array.isArray(opt) ? opt[1] : undefined;
 }
 
+function correctIndices(correct: number | number[]): number[] {
+  return Array.isArray(correct) ? correct : [correct];
+}
+
+
 export default function QuizScreen({ quiz, onDone, onBack }: Props) {
   const [confirmRestart, setConfirmRestart] = useState(false);
 
@@ -32,11 +37,12 @@ export default function QuizScreen({ quiz, onDone, onBack }: Props) {
       const saved = localStorage.getItem(progressKey(quiz.id));
       if (saved) {
         const p = JSON.parse(saved) as SavedProgress;
-        return p.currentIndex > 0 || p.answers.length > 0;
+        return p.currentIndex > 0 || Object.keys(p.answers).length > 0;
       }
     } catch { /* ignore */ }
     return false;
   });
+
   const [currentIndex, setCurrentIndex] = useState(() => {
     try {
       const saved = localStorage.getItem(progressKey(quiz.id));
@@ -44,59 +50,121 @@ export default function QuizScreen({ quiz, onDone, onBack }: Props) {
     } catch { /* ignore */ }
     return 0;
   });
-  const [selected, setSelected] = useState<number | null>(null);
-  const [answers, setAnswers] = useState<QuizAnswer[]>(() => {
+
+  // answers: questionIndex → selected indices
+  const [answers, setAnswers] = useState<Record<number, number[]>>(() => {
     try {
       const saved = localStorage.getItem(progressKey(quiz.id));
-      if (saved) return (JSON.parse(saved) as SavedProgress).answers;
+      if (saved) return (JSON.parse(saved) as SavedProgress).answers ?? {};
     } catch { /* ignore */ }
-    return [];
+    return {};
   });
+
+  // pending selection for the current question (before confirming)
+  const [pendingSelection, setPendingSelection] = useState<number[]>([]);
+  const [revealed, setRevealed] = useState(false);
 
   const question = quiz.questions[currentIndex];
   const total = quiz.questions.length;
   const progress = currentIndex / total;
   const isLast = currentIndex === total - 1;
-  const revealed = selected !== null;
+  const isMultiple = Array.isArray(question.correct) && question.correct.length > 1;
+  const storedAnswer = answers[currentIndex];
+  const isAnswered = storedAnswer !== undefined;
+
+  // When navigating to a question, restore its state
+  useEffect(() => {
+    if (storedAnswer !== undefined) {
+      setPendingSelection(storedAnswer);
+      setRevealed(true);
+    } else {
+      setPendingSelection([]);
+      setRevealed(false);
+    }
+  }, [currentIndex]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
-    if (answers.length > 0 || currentIndex > 0) {
+    if (Object.keys(answers).length > 0 || currentIndex > 0) {
       localStorage.setItem(progressKey(quiz.id), JSON.stringify({ currentIndex, answers }));
     }
   }, [currentIndex, answers, quiz.id]);
 
-  function handleSelect(optionIndex: number) {
+  function handleToggleOption(optionIndex: number) {
     if (revealed) return;
-    setSelected(optionIndex);
+    if (isMultiple) {
+      setPendingSelection((prev) =>
+        prev.includes(optionIndex)
+          ? prev.filter((i) => i !== optionIndex)
+          : [...prev, optionIndex]
+      );
+    } else {
+      setPendingSelection([optionIndex]);
+    }
+  }
+
+  function handleConfirm() {
+    if (pendingSelection.length === 0) return;
+    const newAnswers = { ...answers, [currentIndex]: pendingSelection };
+    setAnswers(newAnswers);
+    setRevealed(true);
   }
 
   function handleNext() {
-    if (selected === null) return;
-    const newAnswers = [
-      ...answers,
-      { questionIndex: currentIndex, selected, correct: question.correct },
-    ];
+    if (!isAnswered && !revealed) return;
+    const finalAnswers = revealed ? { ...answers, [currentIndex]: pendingSelection } : answers;
+    if (!finalAnswers[currentIndex]) return;
+    const savedAnswers = { ...finalAnswers };
+    setAnswers(savedAnswers);
+
     if (isLast) {
       localStorage.removeItem(progressKey(quiz.id));
-      onDone(newAnswers);
+      const result: QuizAnswer[] = Object.entries(savedAnswers).map(([qi, sel]) => ({
+        questionIndex: Number(qi),
+        selected: sel,
+        correct: quiz.questions[Number(qi)].correct,
+      }));
+      onDone(result);
     } else {
-      setAnswers(newAnswers);
       setCurrentIndex((i) => i + 1);
-      setSelected(null);
     }
   }
 
+  function handlePrev() {
+    if (currentIndex === 0) return;
+    if (revealed && !isAnswered) {
+      setAnswers((prev) => ({ ...prev, [currentIndex]: pendingSelection }));
+    }
+    setCurrentIndex((i) => i - 1);
+  }
+
+  const answeredCount = Object.keys(answers).length + (revealed && !isAnswered ? 1 : 0);
+
   function optionStyle(idx: number): React.CSSProperties {
     const base: React.CSSProperties = { ...styles.option };
-    if (!revealed) return base;
-    if (idx === question.correct) {
+    const ci = correctIndices(question.correct);
+    const isSelectedPending = pendingSelection.includes(idx);
+
+    if (!revealed) {
+      return {
+        ...base,
+        background: isSelectedPending ? 'var(--accent-border)' : C.surface,
+        border: isSelectedPending ? `2px solid ${C.accent}` : `1px solid ${C.border}`,
+      };
+    }
+
+    const isCorrectOpt = ci.includes(idx);
+    const isWrongSelected = isSelectedPending && !isCorrectOpt;
+
+    if (isCorrectOpt) {
       return { ...base, background: 'var(--good-bg-strong)', border: `2px solid ${C.good}`, color: C.good };
     }
-    if (idx === selected) {
+    if (isWrongSelected) {
       return { ...base, background: 'var(--again-bg-strong)', border: `2px solid ${C.again}`, color: C.again };
     }
     return { ...base, opacity: 0.45 };
   }
+
+  const canGoNext = revealed && answers[currentIndex] !== undefined;
 
   return (
     <div style={styles.wrapper}>
@@ -110,28 +178,39 @@ export default function QuizScreen({ quiz, onDone, onBack }: Props) {
         <div style={{ ...styles.progressFill, width: `${progress * 100}%` }} />
       </div>
 
-      {resumed && selected === null && (
+      {resumed && !revealed && answeredCount === 0 && (
         <div style={styles.resumeBanner}>Resuming from question {currentIndex + 1}</div>
       )}
 
       <div style={styles.body}>
         <div style={styles.questionCard}>
           <p style={styles.questionLabel}>Question {currentIndex + 1}</p>
+          {question.image && (
+            <img
+              src={question.image}
+              alt="Question image"
+              style={styles.questionImage}
+            />
+          )}
           <p style={styles.questionText}>{question.question}</p>
+          {isMultiple && (
+            <p style={styles.multipleHint}>Select all correct answers</p>
+          )}
         </div>
 
         <div style={styles.optionsList}>
           {question.options.map((opt, idx) => {
             const text = optText(opt);
             const explanation = optExplanation(opt);
-            const isCorrect = idx === question.correct;
-            const isWrongSelected = revealed && idx === selected && !isCorrect;
+            const ci = correctIndices(question.correct);
+            const isCorrectOpt = ci.includes(idx);
+            const isWrongSelected = revealed && pendingSelection.includes(idx) && !isCorrectOpt;
             const showExplanation = revealed && !!explanation;
             return (
               <div key={idx}>
                 <button
                   style={optionStyle(idx)}
-                  onClick={() => handleSelect(idx)}
+                  onClick={() => handleToggleOption(idx)}
                 >
                   <span style={styles.optionLetter}>{String.fromCharCode(65 + idx)}</span>
                   <div style={styles.optionContent}>
@@ -139,13 +218,13 @@ export default function QuizScreen({ quiz, onDone, onBack }: Props) {
                     {showExplanation && (
                       <span style={{
                         ...styles.optionExplanation,
-                        color: isCorrect ? C.good : isWrongSelected ? C.again : C.mutedLight,
+                        color: isCorrectOpt ? C.good : isWrongSelected ? C.again : C.mutedLight,
                       }}>
                         {explanation}
                       </span>
                     )}
                   </div>
-                  {revealed && isCorrect && <span style={styles.optionBadge}>✓</span>}
+                  {revealed && isCorrectOpt && <span style={styles.optionBadge}>✓</span>}
                   {isWrongSelected && <span style={styles.optionBadge}>✗</span>}
                 </button>
               </div>
@@ -153,14 +232,50 @@ export default function QuizScreen({ quiz, onDone, onBack }: Props) {
           })}
         </div>
 
+        {!revealed && pendingSelection.length > 0 && (
+          <button onClick={handleConfirm} style={styles.confirmBtn}>
+            {isMultiple ? `Confirm ${pendingSelection.length} answer${pendingSelection.length !== 1 ? 's' : ''}` : 'Confirm answer'}
+          </button>
+        )}
+
+        {!revealed && pendingSelection.length === 0 && (
+          <p style={styles.hint}>
+            {isMultiple ? 'Select all correct answers, then confirm' : 'Select an answer to continue'}
+          </p>
+        )}
+
+        <div style={styles.navRow}>
+          <button
+            onClick={handlePrev}
+            style={{
+              ...styles.navArrowBtn,
+              opacity: currentIndex > 0 ? 1 : 0.3,
+              cursor: currentIndex > 0 ? 'pointer' : 'default',
+            }}
+            disabled={currentIndex === 0}
+            title="Previous question"
+          >
+            ←
+          </button>
+
+          <span style={styles.navHint}>{answeredCount} / {total} answered</span>
+
+          {canGoNext && (
+            <button
+              onClick={handleNext}
+              style={styles.navArrowBtn}
+              title={isLast ? 'See results' : 'Next question'}
+            >
+              {isLast ? '✓' : '→'}
+            </button>
+          )}
+          {!canGoNext && <div style={{ ...styles.navArrowBtn, opacity: 0.3, cursor: 'default' }}>→</div>}
+        </div>
+
         {revealed && (
           <button onClick={handleNext} style={styles.nextBtn}>
             {isLast ? 'See results' : 'Next question →'}
           </button>
-        )}
-
-        {!revealed && (
-          <p style={styles.hint}>Select an answer to continue</p>
         )}
       </div>
 
@@ -175,21 +290,22 @@ export default function QuizScreen({ quiz, onDone, onBack }: Props) {
       {confirmRestart && (
         <div style={styles.modalBackdrop}>
           <div style={styles.modal}>
-            <p style={styles.modalTitle}>Quiz neu starten?</p>
-            <p style={styles.modalHint}>Dein Fortschritt geht verloren.</p>
+            <p style={styles.modalTitle}>Restart quiz?</p>
+            <p style={styles.modalHint}>Your progress will be lost.</p>
             <div style={styles.modalBtns}>
-              <button onClick={() => setConfirmRestart(false)} style={styles.cancelBtn}>Abbrechen</button>
+              <button onClick={() => setConfirmRestart(false)} style={styles.cancelBtn}>Cancel</button>
               <button
                 onClick={() => {
                   localStorage.removeItem(progressKey(quiz.id));
                   setCurrentIndex(0);
-                  setAnswers([]);
-                  setSelected(null);
+                  setAnswers({});
+                  setPendingSelection([]);
+                  setRevealed(false);
                   setConfirmRestart(false);
                 }}
-                style={styles.confirmBtn}
+                style={styles.confirmModalBtn}
               >
-                Neu starten
+                Restart
               </button>
             </div>
           </div>
@@ -260,7 +376,7 @@ const styles: Record<string, React.CSSProperties> = {
     background: C.surface,
     border: `1px solid ${C.accentBorder}`,
     borderRadius: 20,
-    padding: '24px 20px',
+    padding: '20px 20px 16px',
     marginBottom: 8,
   },
   questionLabel: {
@@ -269,7 +385,14 @@ const styles: Record<string, React.CSSProperties> = {
     fontWeight: 600,
     letterSpacing: '0.08em',
     textTransform: 'uppercase',
-    marginBottom: 10,
+    marginBottom: 8,
+  },
+  questionImage: {
+    width: '100%',
+    maxHeight: 200,
+    objectFit: 'contain',
+    borderRadius: 10,
+    marginBottom: 12,
   },
   questionText: {
     color: C.text,
@@ -277,6 +400,13 @@ const styles: Record<string, React.CSSProperties> = {
     fontWeight: 600,
     fontFamily: "'Playfair Display', serif",
     lineHeight: 1.5,
+  },
+  multipleHint: {
+    color: C.accent,
+    fontSize: 11,
+    fontWeight: 600,
+    letterSpacing: '0.04em',
+    marginTop: 8,
   },
   optionsList: { width: '100%', display: 'flex', flexDirection: 'column', gap: 10 },
   option: {
@@ -311,8 +441,21 @@ const styles: Record<string, React.CSSProperties> = {
   optionText: { fontSize: 14, lineHeight: 1.4 },
   optionExplanation: { fontSize: 12, lineHeight: 1.5, fontStyle: 'italic', opacity: 0.9 },
   optionBadge: { fontSize: 16, fontWeight: 700, flexShrink: 0 },
+  confirmBtn: {
+    marginTop: 4,
+    background: C.accent,
+    color: '#fff',
+    border: 'none',
+    borderRadius: 14,
+    padding: '13px 28px',
+    fontSize: 14,
+    fontWeight: 600,
+    cursor: 'pointer',
+    boxShadow: '0 4px 20px var(--accent-shadow)',
+    alignSelf: 'stretch',
+  },
   nextBtn: {
-    marginTop: 8,
+    marginTop: 4,
     background: C.accent,
     color: '#fff',
     border: 'none',
@@ -324,6 +467,27 @@ const styles: Record<string, React.CSSProperties> = {
     boxShadow: '0 4px 20px var(--accent-shadow)',
     alignSelf: 'stretch',
   },
+  navRow: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    width: '100%',
+    marginTop: 4,
+  },
+  navArrowBtn: {
+    width: 44,
+    height: 44,
+    borderRadius: '50%',
+    background: C.surface,
+    border: `1px solid ${C.border}`,
+    color: C.mutedLight,
+    fontSize: 20,
+    cursor: 'pointer',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+  } as React.CSSProperties,
+  navHint: { color: C.muted, fontSize: 12 },
   hint: { color: C.muted, fontSize: 12, marginTop: 4 },
   restartFab: {
     position: 'fixed',
@@ -374,7 +538,7 @@ const styles: Record<string, React.CSSProperties> = {
     cursor: 'pointer',
     fontSize: 14,
   },
-  confirmBtn: {
+  confirmModalBtn: {
     flex: 1,
     background: C.accent,
     border: 'none',

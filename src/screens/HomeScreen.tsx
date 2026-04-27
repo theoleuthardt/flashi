@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect, Fragment } from 'react';
 import type { FlashiData, Topic } from '../types';
 import { C } from '../theme';
 
@@ -32,10 +32,10 @@ interface Props {
   data: FlashiData;
   dueCount: (deckId: string) => number;
   onStudy: (deckId: string) => void;
-  onImport: () => void;
   onDelete: (deckId: string) => void;
   onOpenTopic: (topicId: string) => void;
   onCreateTopic: (name: string) => void;
+  onReorderTopics: (topicIds: string[]) => void;
   onAssignTopic?: (deckId: string, topicId: string) => void;
   onAdmin?: () => void;
   onSettings: () => void;
@@ -49,10 +49,10 @@ export default function HomeScreen({
   data,
   dueCount,
   onStudy,
-  onImport,
   onDelete,
   onOpenTopic,
   onCreateTopic,
+  onReorderTopics,
   onAssignTopic,
   onAdmin,
   onSettings,
@@ -67,6 +67,19 @@ export default function HomeScreen({
   const [showNewTopic, setShowNewTopic] = useState(false);
   const [dragOverTopicId, setDragOverTopicId] = useState<string | null>(null);
   const [draggingDeckId, setDraggingDeckId] = useState<string | null>(null);
+  const [dragTopicIdx, setDragTopicIdx] = useState<number | null>(null);
+  const [dropTopicIdx, setDropTopicIdx] = useState<number | null>(null);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const searchInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (searchOpen) searchInputRef.current?.focus();
+    else setSearchQuery('');
+  }, [searchOpen]);
+
+  const sq = searchQuery.toLowerCase().trim();
+  const filteredTopics = sq ? data.topics.filter((t) => t.name.toLowerCase().includes(sq)) : data.topics;
 
   const totalDue = data.decks.reduce((s, d) => s + dueCount(d.id), 0);
   const totalCards = data.decks.reduce((s, d) => s + (data.cards[d.id]?.length ?? 0), 0);
@@ -211,50 +224,100 @@ export default function HomeScreen({
               )}
 
               <div className="topic-grid">
-                {data.topics.map((t) => {
+                {filteredTopics.map((t, tIdx) => {
                   const due = topicDue(t);
                   const cards = topicCards(t);
                   const deckCount = topicDeckCount(t);
                   const topicPct = cards > 0 ? Math.round((1 - due / cards) * 100) : 100;
-                  const isDropTarget = dragOverTopicId === t.id;
+                  const isDeckDropTarget = dragOverTopicId === t.id && draggingDeckId !== null;
                   const quizCount = topicQuizCount(t);
+                  const isDraggingTopic = dragTopicIdx === tIdx;
+                  const isTopicDropTarget = dropTopicIdx === tIdx && dragTopicIdx !== null && dragTopicIdx !== tIdx;
+
+                  function handleTopicDrop() {
+                    if (dragTopicIdx !== null && dragTopicIdx !== tIdx) {
+                      const reordered = [...data.topics];
+                      const [item] = reordered.splice(dragTopicIdx, 1);
+                      const insertAt = dragTopicIdx < tIdx ? tIdx - 1 : tIdx;
+                      reordered.splice(insertAt, 0, item);
+                      onReorderTopics(reordered.map((tp) => tp.id));
+                    }
+                    if (draggingDeckId && onAssignTopic) {
+                      onAssignTopic(draggingDeckId, t.id);
+                      setDraggingDeckId(null);
+                    }
+                    setDragOverTopicId(null);
+                    setDragTopicIdx(null);
+                    setDropTopicIdx(null);
+                  }
+
                   return (
-                    <button
-                      key={t.id}
-                      className="topic-island"
-                      onClick={() => onOpenTopic(t.id)}
-                      style={{
-                        ...styles.topicCard,
-                        border: isDropTarget ? `2px solid ${C.accent}` : `1px solid ${C.border}`,
-                        background: isDropTarget ? 'var(--easy-bg)' : C.surface,
-                      }}
-                      onDragOver={(e) => { e.preventDefault(); setDragOverTopicId(t.id); }}
-                      onDragLeave={() => setDragOverTopicId(null)}
-                      onDrop={(e) => {
-                        e.preventDefault();
-                        setDragOverTopicId(null);
-                        if (draggingDeckId && onAssignTopic) {
-                          onAssignTopic(draggingDeckId, t.id);
-                          setDraggingDeckId(null);
-                        }
-                      }}
-                    >
-                      <div style={styles.topicEmoji}>📂</div>
-                      <div style={styles.topicName}>{t.name}</div>
-                      <div style={styles.topicMeta}>
-                        {deckCount} deck{deckCount !== 1 ? 's' : ''} · {cards} cards
-                        {quizCount > 0 && ` · ${quizCount} quiz${quizCount !== 1 ? 'zes' : ''}`}
-                      </div>
-                      {cards > 0 && (
-                        <div style={{ ...styles.topicPct, color: topicPct >= 80 ? C.good : topicPct >= 40 ? C.hard : C.muted }}>
-                          {topicPct}%
-                        </div>
+                    <Fragment key={t.id}>
+                      {isTopicDropTarget && (
+                        <div
+                          style={styles.topicDropSlot}
+                          onDragOver={(e) => { e.preventDefault(); setDropTopicIdx(tIdx); }}
+                          onDrop={(e) => { e.preventDefault(); handleTopicDrop(); }}
+                        />
                       )}
-                      {due > 0 && <div style={styles.topicDue}>{due} due</div>}
-                      {isDropTarget && <div style={styles.dropHint}>Drop here</div>}
-                    </button>
+                      <button
+                        className="topic-island"
+                        draggable={!draggingDeckId}
+                        onClick={() => { if (dragTopicIdx === null) onOpenTopic(t.id); }}
+                        style={{
+                          ...styles.topicCard,
+                          border: isDeckDropTarget ? `2px solid ${C.accent}` : `1px solid ${C.border}`,
+                          background: isDeckDropTarget ? 'var(--easy-bg)' : C.surface,
+                          opacity: isDraggingTopic ? 0.35 : 1,
+                          transition: 'opacity 0.15s',
+                        }}
+                        onDragStart={() => { setDragTopicIdx(tIdx); setDropTopicIdx(null); }}
+                        onDragOver={(e) => {
+                          e.preventDefault();
+                          if (draggingDeckId) setDragOverTopicId(t.id);
+                          else setDropTopicIdx(tIdx);
+                        }}
+                        onDragLeave={() => { setDragOverTopicId(null); }}
+                        onDrop={(e) => { e.preventDefault(); handleTopicDrop(); }}
+                        onDragEnd={() => { setDragTopicIdx(null); setDropTopicIdx(null); setDragOverTopicId(null); }}
+                      >
+                        <div style={styles.topicEmoji}>📂</div>
+                        <div style={styles.topicName}>{t.name}</div>
+                        <div style={styles.topicMeta}>
+                          {deckCount} deck{deckCount !== 1 ? 's' : ''} · {cards} cards
+                          {quizCount > 0 && ` · ${quizCount} quiz${quizCount !== 1 ? 'zes' : ''}`}
+                        </div>
+                        {cards > 0 && (
+                          <div style={{ ...styles.topicPct, color: topicPct >= 80 ? C.good : topicPct >= 40 ? C.hard : C.muted }}>
+                            {topicPct}%
+                          </div>
+                        )}
+                        {due > 0 && <div style={styles.topicDue}>{due} due</div>}
+                        {isDeckDropTarget && <div style={styles.dropHint}>Drop here</div>}
+                      </button>
+                    </Fragment>
                   );
                 })}
+                {/* Ghost slot at the end of the grid */}
+                {dragTopicIdx !== null && (
+                  <div
+                    style={{
+                      ...styles.topicDropSlot,
+                      display: dropTopicIdx === data.topics.length ? 'block' : 'none',
+                    }}
+                    onDragOver={(e) => { e.preventDefault(); setDropTopicIdx(data.topics.length); }}
+                    onDrop={(e) => {
+                      e.preventDefault();
+                      if (dragTopicIdx !== null) {
+                        const reordered = [...data.topics];
+                        const [item] = reordered.splice(dragTopicIdx, 1);
+                        reordered.push(item);
+                        onReorderTopics(reordered.map((tp) => tp.id));
+                      }
+                      setDragTopicIdx(null); setDropTopicIdx(null);
+                    }}
+                  />
+                )}
               </div>
             </div>
           )}
@@ -418,9 +481,67 @@ export default function HomeScreen({
         )}
 
         {data.topics.length > 0 && (
-          <button onClick={() => setShowNewTopic(true)} style={styles.fab}>
-            + New topic
-          </button>
+          <div style={styles.fabRow}>
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              overflow: 'hidden',
+              background: C.surface2,
+              border: `1px solid ${searchOpen ? C.accent : C.border}`,
+              borderRadius: searchOpen ? 26 : '50%',
+              width: searchOpen ? 220 : 52,
+              height: 52,
+              transition: 'width 0.35s cubic-bezier(0.4,0,0.2,1), border-radius 0.35s ease, border-color 0.25s',
+              boxShadow: searchOpen
+                ? `0 0 0 2px ${C.accent}55, 0 4px 20px var(--accent-shadow-sm)`
+                : '0 2px 12px rgba(0,0,0,0.3)',
+              flexShrink: 0,
+            }}>
+              <input
+                ref={searchInputRef}
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onKeyDown={(e) => { if (e.key === 'Escape') setSearchOpen(false); }}
+                placeholder="Search topics…"
+                style={{
+                  flex: 1,
+                  background: 'none',
+                  border: 'none',
+                  color: C.text,
+                  fontSize: 13,
+                  padding: searchOpen ? '0 0 0 16px' : 0,
+                  opacity: searchOpen ? 1 : 0,
+                  transition: `opacity ${searchOpen ? '0.2s 0.18s' : '0.1s 0s'}`,
+                  outline: 'none',
+                  pointerEvents: searchOpen ? 'auto' : 'none',
+                  minWidth: 0,
+                }}
+              />
+              <button
+                onClick={() => setSearchOpen((o) => !o)}
+                style={{
+                  width: 52,
+                  height: 52,
+                  flexShrink: 0,
+                  background: 'none',
+                  border: 'none',
+                  color: searchOpen ? C.accent : C.mutedLight,
+                  fontSize: searchOpen ? 15 : 20,
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  transition: 'color 0.2s, font-size 0.15s',
+                }}
+                aria-label={searchOpen ? 'Close search' : 'Search topics'}
+              >
+                {searchOpen ? '✕' : '🔍'}
+              </button>
+            </div>
+            <button onClick={() => setShowNewTopic(true)} style={styles.fab}>
+              + New topic
+            </button>
+          </div>
         )}
       </div>
     </div>
@@ -578,6 +699,12 @@ const styles: Record<string, React.CSSProperties> = {
     fontWeight: 600,
     padding: '6px 14px',
     boxShadow: '0 2px 10px var(--accent-shadow-sm)',
+  },
+  topicDropSlot: {
+    border: `2px dashed ${C.accent}`,
+    borderRadius: 18,
+    background: 'var(--easy-bg)',
+    minHeight: 80,
   },
   topicCard: {
     background: C.surface,
@@ -815,10 +942,47 @@ const styles: Record<string, React.CSSProperties> = {
     fontSize: 14,
     fontWeight: 500,
   },
-  fab: {
+  fabRow: {
     position: 'fixed',
     bottom: 28,
     right: 20,
+    display: 'flex',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    zIndex: 100,
+  },
+  fabSearchWrapper: {
+    display: 'flex',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  searchInput: {
+    background: C.surface2,
+    border: `1px solid ${C.border}`,
+    borderRadius: 14,
+    color: C.text,
+    fontSize: 13,
+    padding: '13px 16px',
+    width: 180,
+    outline: 'none',
+    boxShadow: '0 2px 12px rgba(0,0,0,0.25)',
+  },
+  fabSearch: {
+    borderRadius: '50%',
+    width: 52,
+    height: 52,
+    border: `1px solid ${C.border}`,
+    fontSize: 20,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    cursor: 'pointer',
+    transition: 'background 0.2s, box-shadow 0.2s',
+    flexShrink: 0,
+  } as React.CSSProperties,
+  fab: {
     background: C.accent,
     color: '#fff',
     border: 'none',
@@ -828,5 +992,6 @@ const styles: Record<string, React.CSSProperties> = {
     fontWeight: 600,
     cursor: 'pointer',
     boxShadow: '0 6px 28px var(--accent-shadow)',
+    whiteSpace: 'nowrap',
   },
 };
