@@ -505,7 +505,7 @@ export default function HomeScreen({
                   border: 'none',
                   color: C.text,
                   fontSize: 13,
-                  padding: '0 0 0 16px',
+                  padding: searchOpen ? '0 0 0 16px' : 0,
                   opacity: searchOpen ? 1 : 0,
                   transition: `opacity ${searchOpen ? '0.2s 0.18s' : '0.1s 0s'}`,
                   outline: 'none',
