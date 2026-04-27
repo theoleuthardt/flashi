@@ -93,7 +93,7 @@ export default function StudyScreen({
 
       <div style={styles.cardArea}>
         <div className={`card-scene ${animClass}`}>
-          <div className={`card-inner${flipped ? ' is-flipped' : ''}`} style={{ minHeight: 240 }}>
+          <div className={`card-inner${flipped ? ' is-flipped' : ''}`} style={{ minHeight: 'max(280px, 38vh)' }}>
             <div
               className="card-face card-face--front"
               onClick={() => setFlipped(true)}
@@ -104,7 +104,9 @@ export default function StudyScreen({
               }}
             >
               <div style={styles.sideLabel}>Front</div>
-              <div style={{ ...styles.cardText, fontSize: 32, fontWeight: 600 }}>{card.front}</div>
+              <div style={styles.cardScrollArea}>
+                <div style={{ ...styles.cardText, fontSize: 32, fontWeight: 600 }}>{card.front}</div>
+              </div>
               <button
                 style={styles.speakBtn}
                 onClick={(e) => { e.stopPropagation(); speak(card.front); }}
@@ -125,7 +127,9 @@ export default function StudyScreen({
               }}
             >
               <div style={styles.sideLabel}>Back</div>
-              <div style={{ ...styles.cardText, fontSize: 22 }}>{card.back}</div>
+              <div style={styles.cardScrollArea}>
+                <div style={{ ...styles.cardText, fontSize: 22 }}>{card.back}</div>
+              </div>
               <button
                 style={styles.speakBtn}
                 onClick={(e) => { e.stopPropagation(); speak(card.back); }}
@@ -246,17 +250,28 @@ const styles: Record<string, React.CSSProperties> = {
     display: 'flex',
     flexDirection: 'column',
     alignItems: 'center',
-    justifyContent: 'center',
-    padding: '36px 28px',
+    justifyContent: 'flex-start',
+    padding: '20px 28px 52px',
     userSelect: 'none',
+    overflow: 'hidden',
   },
   sideLabel: {
     color: C.mutedLight,
     fontSize: 11,
     letterSpacing: '0.10em',
     textTransform: 'uppercase',
-    marginBottom: 20,
+    marginBottom: 12,
     fontWeight: 600,
+    flexShrink: 0,
+  },
+  cardScrollArea: {
+    flex: 1,
+    width: '100%',
+    overflowY: 'auto',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: 0,
   },
   cardText: {
     fontFamily: "'Playfair Display', serif",
