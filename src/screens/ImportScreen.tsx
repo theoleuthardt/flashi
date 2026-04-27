@@ -32,6 +32,15 @@ const EXAMPLE = `// Single deck
   { "name": "Deck 2", "cards": [{ "front": "...", "back": "..." }] }
 ]`;
 
+const EXAMPLE_JSON = `{
+  "name": "Lesson 1 – Cyrillic Alphabet",
+  "cards": [
+    { "front": "А а", "back": "A (as in father)" },
+    { "front": "Б б", "back": "B (as in book)" },
+    { "front": "В в", "back": "V (as in victory)" }
+  ]
+}`;
+
 export default function ImportScreen({ topics, initialTopicId, onImport, onBack }: Props) {
   const [mode, setMode] = useState<'json' | 'manual'>('json');
   const [topicId, setTopicId] = useState(initialTopicId ?? '');
@@ -155,7 +164,15 @@ export default function ImportScreen({ topics, initialTopicId, onImport, onBack 
             <p style={styles.hint}>
               Paste JSON below. Ask an AI to generate decks in this format for you:
             </p>
-            <pre style={styles.example}>{EXAMPLE}</pre>
+            <div style={{ position: 'relative' }}>
+              <pre style={styles.example}>{EXAMPLE}</pre>
+              <button
+                onClick={() => { setJson(EXAMPLE_JSON); setError(''); }}
+                style={styles.useExampleBtn}
+              >
+                Use example
+              </button>
+            </div>
 
             <textarea
               value={json}
@@ -320,6 +337,19 @@ const styles: Record<string, React.CSSProperties> = {
     lineHeight: 1.7,
     fontFamily: "'Fira Code', 'Fira Mono', monospace",
     whiteSpace: 'pre',
+  },
+  useExampleBtn: {
+    position: 'absolute',
+    bottom: 10,
+    right: 10,
+    background: C.surface2,
+    border: `1px solid ${C.border}`,
+    borderRadius: 8,
+    color: C.accent,
+    fontSize: 11,
+    fontWeight: 600,
+    padding: '4px 10px',
+    cursor: 'pointer',
   },
   select: {
     width: '100%',
