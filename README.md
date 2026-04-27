@@ -1,24 +1,42 @@
 # Flashi
 
-A self-hosted, mobile-first flashcard app powered by the SM-2 spaced repetition algorithm. Built with React, TypeScript, Vite, and Express. Installable as a PWA.
+A self-hosted learning app. Create flashcard decks and quizzes — organised by topics, studied with spaced repetition. Built to learn Russian, works for anything.
 
 ## Features
 
+### Flashcards
 - **Spaced repetition** — SM-2 algorithm with Again / Hard / Good / Easy ratings
-- **3D card flip** — smooth CSS perspective animation on every card
-- **Skip cards** — skip to the next card with a slide animation, no rating needed
-- **Topics & folders** — organise decks into topic folders with a grid layout; drag uncategorised decks onto topic cards to assign them
-- **Dashboard** — live stats (decks, cards, due today) in a sidebar on desktop and a top bar on mobile; progress bars on every deck card
+- **3D card flip** — smooth CSS perspective animation; tap to flip, tap again to flip back
+- **Scrollable card content** — long text scrolls inside the card without overflowing
+- **Skip & navigate** — skip forward or go back to the previous card with slide animations
+- **Read-aloud** — tap the speaker icon on any card to hear it read with the browser's Speech Synthesis API
+
+### Quizzes
+- **Multiple-choice** — import quizzes with 4 options per question; each option can carry an explanation revealed after answering (like NotebookLM)
+- **Multi-correct answers** — use `"correct": [0, 2]` to require selecting multiple right answers; single `"correct": 0` keeps single-select mode
+- **Image questions** — add `"image": "url"` to any question to render a photo above it
+- **Question navigation** — left/right arrows let you move freely between questions; answers are saved per-question so you can go back and change them before finishing
+- **Review faults** — the results screen shows every wrong answer with a "Review →" button that jumps back into the quiz at that exact question with all previous answers pre-loaded
+- **Quiz progress** — unfinished quizzes are saved to localStorage and resume from the right question; a restart FAB (↺) lets you start over
+- **Confetti** — a three-volley canvas confetti cannon fires on a 100% score (no external dependencies)
+- **Score history** — each quiz result is stored; the topic screen shows "X% last time / Due / In progress / Not started" per quiz
+
+### Organisation
+- **Topics** — organise decks and quizzes into topic folders with a grid layout
+- **Drag-and-drop sorting** — reorder topics on the home grid, and decks/quizzes inside a topic, by dragging; drop-line / ghost-slot indicators show where items will land
+- **Search FAB** — a morphing circle-to-pill search button on both the home screen and topic screen for filtering topics, decks, and quizzes
 - **Daily Mix** — one button in any topic starts a randomised study session of up to 20 cards from all the topic's decks
 - **Daily Quiz Mix** — one button in any topic assembles a mixed quiz of up to 20 random questions across all quizzes in the topic
 - **Fault repeat** — cards marked "Again" are tracked per topic; a **Repeat faults** button appears after each study session
-- **Read-aloud** — tap the speaker icon on any card to hear it read with the browser's built-in Speech Synthesis API (great for language learning)
-- **Discord reminders** — configure a webhook URL and a daily time in Settings to get a message when cards are due (see below)
-- **Quizzes** — import multiple-choice quizzes (JSON) per topic; each answer option can carry its own explanation that is revealed inline after selecting (like NotebookLM); score screen with fault review
-- **Quiz progress** — unfinished quizzes are saved to localStorage and resume from the right question; a restart FAB (↺) lets you start over with a confirmation
+
+### App
+- **Dashboard** — live stats (decks, cards, quizzes, due today) in a sidebar on desktop and a top bar on mobile; progress bars on every deck card
 - **Progression** — overview screen with overall % learned and per-topic stacked bars (learned / due / new)
+- **Manual import** — create decks and quizzes via a form instead of JSON; both import screens have a JSON tab and a manual form tab side-by-side
+- **Discord reminders** — configure a webhook URL and a daily time in Settings to get a message when cards are due
 - **Multi-user** — admin can create and remove additional user accounts; per-user data stored on the server volume
 - **Auth** — bcrypt password hashing, JWT sessions (30 days); users can change their own password in Settings
+- **Dark / light theme** — toggle in the sidebar or top bar; preference saved to localStorage
 - **PWA** — installable on iPhone, Android, and desktop via the browser
 
 ---
@@ -99,7 +117,9 @@ Open the app in a browser — you will be prompted to create an admin account (u
 
 ## Importing Decks
 
-Ask an AI to generate flashcard decks in the following JSON format and paste it in the app under **+ Create deck**:
+Paste JSON in the app under **+ Create deck**, or use the **Manual** tab to fill in a form directly.
+
+Ask an AI to generate flashcard decks in the following JSON format:
 
 ```json
 { "name": "Lesson 1 – Cyrillic Alphabet", "cards": [
@@ -117,37 +137,44 @@ To import multiple decks at once, wrap them in a JSON array:
 ]
 ```
 
-In the app: **+ Create deck** → paste JSON → optionally assign to a topic → **Create Deck**.
-
 ---
 
 ## Importing Quizzes
 
-Ask an AI to generate quizzes in the following JSON format. Each answer option can be a plain string or a `[text, explanation]` tuple — the explanation is revealed inline after the user selects an answer.
+Paste JSON in the app under **+ Create quiz**, or use the **Manual** tab to build questions one by one.
+
+Each answer option can be a plain string or a `[text, explanation]` tuple — the explanation is revealed inline after answering. Use `"correct": [0, 2]` for questions with multiple right answers. Add `"image": "url"` for picture questions.
 
 ```json
 {
-  "name": "Lesson 1 – Cyrillic Alphabet Quiz",
+  "name": "Russian Capitals Quiz",
   "questions": [
     {
-      "question": "What sound does 'А а' make?",
+      "question": "What is the capital of Russia?",
       "options": [
-        ["A (as in father)", "Correct — А а is the first letter and sounds like the 'a' in 'father'."],
-        ["B (as in book)", "Incorrect — that is Б б."],
-        ["V (as in victory)", "Incorrect — that is В в."],
-        ["G (as in go)", "Incorrect — that is Г г."]
+        ["Kyiv",   "Wrong – Kyiv is the capital of Ukraine."],
+        ["Moscow", "Correct! Moscow has been Russia's capital since 1918."],
+        ["Minsk",  "Wrong – Minsk is the capital of Belarus."],
+        ["Warsaw", "Wrong – Warsaw is the capital of Poland."]
       ],
+      "correct": 1
+    },
+    {
+      "question": "Which of these are Slavic languages?",
+      "options": ["Russian", "French", "Polish", "Italian"],
+      "correct": [0, 2]
+    },
+    {
+      "question": "Identify this landmark",
+      "image": "https://thumbs.dreamstime.com/b/above-st-basil-cathedral-red-square-kremlin-panorama-moscow-russia-above-impressive-st-basil-cathedral-red-square-kremlin-266629583.jpg",
+      "options": ["Kremlin", "Big Ben", "Eiffel Tower", "Colosseum"],
       "correct": 0
     }
   ]
 }
 ```
 
-`correct` is the zero-based index of the right answer. Plain strings work too if you don't need per-option explanations.
-
 To import multiple quizzes at once, wrap them in a JSON array.
-
-In the app: **+ Create quiz** (inside a topic) → paste JSON → **Create Quiz**.
 
 ---
 
